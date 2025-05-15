@@ -1,0 +1,57 @@
+__pycache__
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Package distribution
+build/
+dist/
+*.egg-info/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# PyInstaller
+*.spec
+
+# IDE configs
+.vscode/
+.idea/
+
+# Mac system files
+.DS_Store
+
+# Log files
+*.log
+
+# PyCharm & JetBrains
+*.iml
+out/
+
+# Polars or temporary data artifacts
+data/
+tmp/
+
