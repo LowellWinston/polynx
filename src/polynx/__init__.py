@@ -1,3 +1,4 @@
+__version__ = "0.1.0"
 from .utils import plx_frame_patch, plx_expr_patch, plx_series_patch
 from .core import *
 
@@ -29,4 +30,4 @@ def from_pandas(obj):
     if isinstance(obj, pd.DataFrame):
         return DataFrame(pl.from_pandas(obj))
     else:
-        raise TypeError("Expected a pandas.DataFrame")
+        raise TypeError("Expected a pandas.DataFrame")   
