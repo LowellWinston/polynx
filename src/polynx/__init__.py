@@ -1,4 +1,5 @@
 __version__ = "0.1.0"
+import pandas as pd
 from .utils import plx_frame_patch, plx_expr_patch, plx_series_patch
 from .core import *
 
@@ -25,9 +26,13 @@ plx_frame_patch('max', plx_max)
 plx_frame_patch('min', plx_min)
 plx_series_patch('describe', plx_describe)
 plx_expr_patch('rolling_prod', plx_rolling_prod)
+#plx_frame_patch('join', plx_join)
+
 
 def from_pandas(obj):
     if isinstance(obj, pd.DataFrame):
         return DataFrame(pl.from_pandas(obj))
     else:
         raise TypeError("Expected a pandas.DataFrame")   
+
+
