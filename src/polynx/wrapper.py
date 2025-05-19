@@ -5,16 +5,22 @@ def unwrap(obj):
         return obj._pl
     return obj
 
-def wrap(obj):
+def wrap(obj):    
+    if hasattr(obj, "_is_wrapped"):
+        return obj
+    
     from .frame import DataFrame
     from .lazyframe import LazyFrame
     from .series import Series
-    from .expr import Expr
-
+    from .expr import Expr    
+    
     if isinstance(obj, pl.DataFrame):
         return DataFrame(obj)
     elif isinstance(obj, pl.LazyFrame):
-        return LazyFrame(obj)
+        #print(obj)
+        new_obj = LazyFrame()
+        new_obj._pl = obj
+        return new_obj
     elif isinstance(obj, pl.Series):
         return Series(obj)
     elif isinstance(obj, pl.Expr):

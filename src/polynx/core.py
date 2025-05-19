@@ -1,17 +1,17 @@
-from .utils import *
-from .constant import *
+from . import utils as _utils
 from .expr_parser import parse_polars_expr
 from .wrapper import unwrap, wrap
+import polars as pl
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
-    df_schema = get_schema(self)
+    df_schema = _utils.get_schema(self)
     return self.filter(parse_polars_expr(query_str, df_schema))
 
 
 def plx_eval(self, query_str, mode='select'):
     """ Equivalent of eval in pandas """
-    df_schema = get_schema(self)
+    df_schema = _utils.get_schema(self)
     if isinstance(query_str, str):
         parsed_expr = parse_polars_expr(query_str, df_schema)        
     else:
@@ -32,19 +32,19 @@ def plx_dd(self):
 
 def plx_dsort(self, by=None):
     if by is None:
-        by = list(get_schema(self).keys())
+        by = _utils.get_columns(self)
     return self.sort(by, descending=True)
 
 
 def plx_asort(self, by=None):
     if by is None:
-        by = list(get_schema(self).keys())
+        by = _utils.get_columns(self)
     return self.sort(by, descending=False)
 
 
 def plx_unstack(self):    
-    columns = list(get_schema(self).keys())
-    if isinstance(self, LazyFrame):
+    columns = list(_utils.get_schema(self).keys())
+    if isinstance(self, _utils.LazyFrame):
         self_eager = self.collect()            
     else:
         self_eager = self
@@ -52,9 +52,9 @@ def plx_unstack(self):
     return self_eager.pivot(index=columns[:index_cols], on=columns[-2], values=columns[-1], aggregate_function='first').sort(columns[:index_cols])
 
 
-def plx_plot(self, *args, **kwargs):
+def plx_pplot(self, *args, **kwargs):
     """ Use Pandas Plot. Note that polars has built-in plot function using either altAir """
-    if isinstance(self, LazyFrame):
+    if isinstance(self, _utils.LazyFrame):
         self_eager = self.collect()            
     else:
         self_eager = self
@@ -65,18 +65,18 @@ def plx_plot(self, *args, **kwargs):
 
 def plx_vcnt(self, col=None):    
     if col is None:      
-        col = list(get_schema(self).keys())
+        col = list(_utils.get_schema(self).keys())
     result = self.group_by(col).agg(pl.count()).dsort('count')
-    if isinstance(result, LazyFrame):
+    if isinstance(result, _utils.LazyFrame):
         result = result.collect()
     return result
 
 
 def plx_ucnt(self, col=None):
     if col is None:      
-        col = get_columns(self)
+        col = _utils.get_columns(self)
     self_col = self.select(pl.col(col)).unique(maintain_order=True).count()
-    if isinstance(self_col, LazyFrame):
+    if isinstance(self_col, _utils.LazyFrame):
         self_col_eager = self_col.collect()            
     else:
         self_col_eager = self_col
@@ -99,18 +99,18 @@ def plx_wc(self, *args, **kwargs):
     for arg in args:
         if isinstance(arg, list) or isinstance(arg, tuple):
             for i in arg:
-                results = _append(results, to_plx_expr(self, i))                
+                results = _append(results, _utils.to_plx_expr(self, i))                
         else:
-            results = _append(results, to_plx_expr(self, arg))    
+            results = _append(results, _utils.to_plx_expr(self, arg))    
     return self.with_columns(results)
 
 
 # Polynx Groupby
-def plx_agg(self, gp_keys, expr):
-    df_schema = get_schema(self)    
+def plx_gb(self, gp_keys, expr):
+    df_schema = _utils.get_schema(self)    
     parsed_tree, cols = parse_polars_expr(query_str=expr, df_schema=df_schema, return_cols=True)
     self = self.wc(
-        [pl.col(col).cast(pl.Float64) for col in cols if is_numeric_dtype(df_schema[col])]
+        [pl.col(col).cast(pl.Float64) for col in cols if _utils.is_numeric_dtype(df_schema[col])]
     )
     return self.group_by(gp_keys).agg(parsed_tree).sort(gp_keys)
 
@@ -118,14 +118,14 @@ def plx_agg(self, gp_keys, expr):
 # Describe Groupby
 def describe_groupby(self, group_keys, selected_columns, percentiles=(0.25,0.5,0.75), interpolation='nearest'):
     df = unwrap(self)
-    df_schema = get_schema(df)
+    df_schema = _utils.get_schema(df)
 
     if isinstance(selected_columns, str):
         selected_columns = [selected_columns]
 
     numeric_cols = [
         col for col in selected_columns 
-        if is_numeric_dtype(df_schema[col]) and col not in group_keys
+        if _utils.is_numeric_dtype(df_schema[col]) and col not in group_keys
     ]
 
     aggs = []
@@ -149,7 +149,7 @@ def describe_groupby(self, group_keys, selected_columns, percentiles=(0.25,0.5,0
 def plx_describe(self, percentiles=(0.25,0.5,0.75), interpolation='nearest', group_keys=None, selected_columns=None):
     if group_keys is not None:
         if selected_columns is None:            
-            selected_columns = get_columns(self)
+            selected_columns = _utils.get_columns(self)
         return describe_groupby(self, group_keys, selected_columns, percentiles, interpolation)
     
     # Use built-in Polars describe
@@ -158,27 +158,27 @@ def plx_describe(self, percentiles=(0.25,0.5,0.75), interpolation='nearest', gro
 
 def plx_round(self, decimal=2):
     """ Rounds all float columns in the DataFrame X decimal places """
-    df_schema = get_schema(self)
+    df_schema = _utils.get_schema(self)
     return self.with_columns(
-        [pl.col(col).round(decimal) for col in get_columns(self) if is_flt_dtype(df_schema[col])]
+        [pl.col(col).round(decimal) for col in _utils.get_columns(self) if _utils.is_flt_dtype(df_schema[col])]
     )
 
 
 def plx_cum_max(self):
     """ Rounds all float columns in the DataFrame X decimal places """
-    df_schema = get_schema(self)
+    df_schema = _utils.get_schema(self)
     return self.with_columns(
-        [pl.col(col).cum_max() for col in list(df_schema.keys()) if is_flt_dtype(df_schema[col])]
+        [pl.col(col).cum_max() for col in list(df_schema.keys()) if _utils.is_flt_dtype(df_schema[col])]
     )
 
 
 def plx_to_list(self, col_name=None): 
     df = self       
     if col_name is None:
-        df_columns = columns(df)    
+        df_columns = _utils.get_columns(df)    
         col_name = df_columns[0]
     df_earger = df.get_column(col_name)
-    if isinstance(df, LazyFrame):
+    if isinstance(df, _utils.LazyFrame):
         df_earger = df_earger.collect()
     return df_earger.to_list()
 
@@ -186,10 +186,10 @@ def plx_to_list(self, col_name=None):
 def plx_max(self, col_name=None):
     df = self
     if col_name is None:
-        df_columns = columns(df)  
+        df_columns = _utils.get_columns(df)  
         col_name = df_columns[0]
     df_earger = df.select(pl.col(col_name).max())
-    if isinstance(df, LazyFrame):
+    if isinstance(df, _utils.LazyFrame):
         df_earger = df_earger.collect()
     return df_earger.item()
 
@@ -197,15 +197,15 @@ def plx_max(self, col_name=None):
 def plx_min(self, col_name=None):
     df = self
     if col_name is None:
-        df_columns = columns(df)  
+        df_columns = _utils.get_columns(df)  
         col_name = df_columns[0]
     df_earger = df.select(pl.col(col_name).min())
-    if isinstance(df, LazyFrame):
+    if isinstance(df, _utils.LazyFrame):
         df_earger = df_earger.collect()
     return df_earger.item()    
 
 def plx_to_pandas(self):
-    if isinstance(self, (DataFrame, Series)):
+    if isinstance(self, (_utils.DataFrame, _utils.Series)):
         return self.to_pandas()
     else:
         raise(f"It is not a polynx.DataFrame or polynx.Series object and cannot be converted to pandas!")

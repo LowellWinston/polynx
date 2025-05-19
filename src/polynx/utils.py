@@ -1,15 +1,15 @@
-from .frame import DataFrame, pl
+from .frame import DataFrame
 from .lazyframe import LazyFrame
 from .series import Series
 from .expr import Expr
 from .expr_parser import parse_polars_expr
 from .constant import PL_DATETIME_DTYPE, PL_NUMERIC_DTYPES, PL_FLT_DTYPES
-
+import polars as pl
 
 
 def plx_frame_patch(plx_func_name, func):
-    setattr(DataFrame, plx_func_name, func)
     setattr(LazyFrame, plx_func_name, func)
+    setattr(DataFrame, plx_func_name, func)    
 
 
 def plx_expr_patch(plx_func_name, func):

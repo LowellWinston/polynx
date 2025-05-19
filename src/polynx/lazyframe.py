@@ -3,21 +3,22 @@ from .wrapper import wrap, unwrap
 
 
 class LazyFrame:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):            
         self._pl = pl.LazyFrame(*args, **kwargs)
+        self._is_wrapped = True
 
-    def __getattr__(self, name):
-        attr = getattr(self._pl, name)
-
-        if callable(attr):
-            def wrapped(*args, **kwargs):
-                args = [unwrap(a) for a in args]
-                kwargs = {k: unwrap(v) for k, v in kwargs.items()}
-                result = attr(*args, **kwargs)
-                return wrap(result)
-            return wrapped
-
-        return attr
+    def __getattribute__(self, name):
+        try:
+            return super().__getattribute__(name)
+        except AttributeError:
+            _pl = super().__getattribute__("_pl")
+            attr = getattr(_pl, name)
+            if callable(attr):
+                def wrapped(*args, **kwargs):
+                    from polynx.wrapper import wrap, unwrap
+                    return wrap(attr(*[unwrap(a) for a in args], **{k: unwrap(v) for k, v in kwargs.items()}))
+                return wrapped
+            return attr  
 
     def __getitem__(self, item):
         if isinstance(item, str): # df["col"]
@@ -33,8 +34,4 @@ class LazyFrame:
         return f"PolynxLazyFrame:\n{repr(self._pl)}"
 
     def to_polars(self):
-        return self._pl
-
-    def collect(self, *args, **kwargs):
-        return DataFrame(self._pl.collect(*args, **kwargs))
-
+        return self._pl    
