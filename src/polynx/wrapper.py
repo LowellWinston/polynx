@@ -5,14 +5,15 @@ def unwrap(obj):
         return obj._pl
     return obj
 
-def wrap(obj):    
-    if hasattr(obj, "_is_wrapped"):
-        return obj
-    
+def wrap(obj):       
     from .frame import DataFrame
     from .lazyframe import LazyFrame
     from .series import Series
-    from .expr import Expr    
+    from .expr import Expr 
+    from .groupby import GroupBy  
+
+    if getattr(obj, "_is_wrapped", False):
+        return obj 
     
     if isinstance(obj, pl.DataFrame):
         return DataFrame(obj)
@@ -25,4 +26,6 @@ def wrap(obj):
         return Series(obj)
     elif isinstance(obj, pl.Expr):
         return Expr(obj)
+    elif isinstance(obj, (pl.dataframe.group_by.GroupBy, pl.lazyframe.group_by.LazyGroupBy)):
+        return GroupBy(obj)
     return obj
