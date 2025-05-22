@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='polynx',  
-    version='0.1.1',
+    version='0.1.2',
     packages=find_packages(),
     install_requires=[  
         "polars>=1.24",
@@ -22,4 +22,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
+    project_urls={
+        'Changelog': 'https://github.com/LowellWinston/polynx.git/blob/main/CHANGELOG.md',
+    },
 )

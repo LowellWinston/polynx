@@ -74,3 +74,57 @@ def is_numeric_dtype(dtype):
 
 def is_flt_dtype(dtype):
     return dtype in PL_FLT_DTYPES
+
+def plx_merge(left, right, on=None, how="inner", suffixes=("_x", "_y")):
+    """
+    pandas style merge
+
+    Parameters:
+    left (pl.DataFrame): Left DataFrame
+    right (pl.DataFrame): Right DataFrame
+    on (str or list): Column(s) to join on
+    how (str): Type of join - "inner", "left", "right", "outer"
+    suffixes (tuple): Suffixes for overlapping column names
+
+    Returns:
+    pl.DataFrame or pl.LazyFrame: Merged DataFrame
+    """
+
+    # Ensure `on` is a list
+    if isinstance(on, str):
+        on = [on]
+   
+    # Get common columns (excluding join keys)
+    common_cols = set(get_columns(left)) & set(get_columns(right)) - set(on)
+
+    # Rename overlapping columns in `right` DataFrame
+    left_renamed = left.rename({col: col + suffixes[0] for col in common_cols})
+
+    # Rename overlapping columns in `right` DataFrame
+    right_renamed = right.rename({col: col + suffixes[1] for col in common_cols})
+
+    # Perform join
+    df_merged = left_renamed.join(right_renamed, on=on, how=how)
+
+    return df_merged
+
+
+def select(conds, choices, default):              
+    """ multiple condition statements, mirroring np.select """
+    def as_expr(x):
+        return x if isinstance(x, pl.Expr) else pl.lit(x)
+
+    if len(conds) != len(choices):
+        raise ValueError("Number of conditions and choices must match")
+
+    expr = pl.when(conds[0]).then(as_expr(choices[0]))
+    for cond, choice in zip(conds[1:], choices[1:]):
+        expr = expr.when(cond).then(as_expr(choice))
+    return expr.otherwise(as_expr(default))
+
+
+def where(cond, choice, default):
+    """ single condition statment, mirroring np.where """
+    return select([cond], [choice], default)
+
+

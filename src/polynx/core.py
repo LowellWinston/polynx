@@ -2,6 +2,8 @@ from . import utils as _utils
 from .expr_parser import parse_polars_expr
 from .wrapper import unwrap, wrap
 import polars as pl
+import numpy as np
+from .utils import select, where
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
@@ -153,7 +155,7 @@ def plx_describe(self, percentiles=(0.25,0.5,0.75), interpolation='nearest', gro
         return describe_groupby(self, group_keys, selected_columns, percentiles, interpolation)
     
     # Use built-in Polars describe
-    return unwrap(self).describe(percentiles=percentiles, interpolation=interpolation)
+    return wrap(unwrap(self).describe(percentiles=percentiles, interpolation=interpolation))
 
 
 def plx_round(self, decimal=2):
@@ -209,3 +211,25 @@ def plx_to_pandas(self):
         return self.to_pandas()
     else:
         raise(f"It is not a polynx.DataFrame or polynx.Series object and cannot be converted to pandas!")
+    
+
+def plx_size(df, unit='mb', return_size=False):
+    _size = np.round(df.estimated_size(unit),2)  
+    print(f"DataFrame size: {_size} {unit.upper()}")      
+    if return_size:
+        return _size
+    
+
+def plx_rename(self, *args, **kwargs):
+
+    if len(args) == 1 and isinstance(args[0], list):
+        cur_cols = _utils.columns(self)
+        new_cols = args[0]
+        if len(cur_cols) != len(new_cols):
+            raise ValueError("Length of new column names must match the number of columns in the DataFrame.")      
+        for i in range(len(new_cols)):            
+            self = wrap(unwrap(self).rename({cur_cols[i]: new_cols[i]}))
+        #print(self.collect())
+        return self
+    else:
+        return wrap(unwrap(self).rename(*args, **kwargs))
