@@ -60,12 +60,7 @@ query_grammar = r"""
     ?method_call: "." CNAME "(" [args] ")" -> dynamic_method
     | "." CNAME -> namespace    
 
-    ?func_call: fn_name "(" [args] ")" -> func_call
-    fn_name: CNAME -> fn_name    
-
-    #?fn_name: CNAME | CNAME "." CNAME  -> fn_name
-    #?func_call: CNAME "." CNAME "(" [args] ")" -> namespace_func_call
-    #| CNAME "(" [args] ")" -> standalone_func_call          
+    ?func_call: CNAME "(" [args] ")" -> func_call
    
     list_expr: "[" [expr ("," expr)* [","]] "]"    
   
@@ -157,7 +152,6 @@ class PolarsExprBuilder(Transformer):
         return POLARS_TYPES[value]
    
     def pl_type(self, items): 
-        #print("pl_type called", items)       
         return PolarsExprBuilder.resolve_dtype("pl." + str(items[0]))
        
     def kwarg(self, args):
@@ -205,7 +199,6 @@ class PolarsExprBuilder(Transformer):
         for i in range(1, len(items)-1, 2):
             op = items[i].value
             right = to_pl_date(items[i+1])
-            #print(type(right), right)
             comp = {
                 "==": left == right,
                 "!=": left != right,
@@ -343,37 +336,10 @@ class PolarsExprBuilder(Transformer):
     def namespace(self, args):              
         name = str(args[0])        
         return lambda expr: getattr(expr, name)
-
+    
+    # Namespace function is not supported to avoid confusion with method call
     def fn_name(self, args):
-        #print("fn_name called", args)
-        return '.'.join(str(arg) for arg in args)
-    
-    
-    # def func_call_with_args(self, func_name, raw_args):
-    #     try:
-    #         func = eval(func_name)
-    #     except:
-    #         func = self.local_vars[func_name]        
-    #     func_args = [a for a in raw_args if a is not None]
-           
-    #     if not func_args:
-    #         return func()          
-
-    #     _args, _kwargs = [], {}
-    #     PolarsExprBuilder.get_args(func_args[0], _args, _kwargs)
-    #     return func(*_args, **_kwargs)   
-
-    # def standalone_func_call(self, args):
-    #     print("standalone_func_call", args)
-    #     func_name = str(args[0])
-    #     raw_args = args[1:]
-    #     return self.func_call_with_args(func_name, raw_args)
-        
-    # def namespace_func_call(self, args): 
-    #     print("namespace_func_called", args)
-    #     func_name = str(args[0]) + '.' + str(args[1])
-    #     raw_args = args[2:]
-    #     return self.func_call_with_args(func_name, raw_args)
+        return str(args[0])
 
     def func_call(self, args):        
         try:
@@ -430,7 +396,6 @@ def parse_polars_expr(query_str: str, df_schema=None, local_vars=None, return_co
     expr = query_str.strip()
     expr = substitute_var(expr, local_vars)    
     transformer = PolarsExprBuilder(df_schema=df_schema or [], local_vars=local_vars)
-    #print(expr)
     tree = PL_PARSER.parse(expr)    
     parsed_tree = transformer.transform(tree)
     if return_cols:

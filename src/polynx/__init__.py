@@ -1,4 +1,4 @@
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 from . import core as _core
 from .utils import plx_frame_patch, plx_expr_patch, plx_rolling_prod, DataFrame, LazyFrame, Series, Expr, plx_merge as merge
 from . import io as _io

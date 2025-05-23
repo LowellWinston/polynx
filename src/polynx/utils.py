@@ -128,3 +128,5 @@ def where(cond, choice, default):
     return select([cond], [choice], default)
 
 
+def mondf(beg_date, end_date):
+    return (end_date.dt.year() - beg_date.dt.year())*100 + end_date.dt.month() - beg_date.dt.month()

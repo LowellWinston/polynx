@@ -3,7 +3,7 @@ from .expr_parser import parse_polars_expr
 from .wrapper import unwrap, wrap
 import polars as pl
 import numpy as np
-from .utils import select, where
+from .utils import select, where, mondf
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
@@ -233,3 +233,5 @@ def plx_rename(self, *args, **kwargs):
         return self
     else:
         return wrap(unwrap(self).rename(*args, **kwargs))
+
+

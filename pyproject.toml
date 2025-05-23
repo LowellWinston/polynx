@@ -7,7 +7,6 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.md"
-changelog = "CHANGELOG.md"
 requires-python = ">=3.8"
 dependencies = [
   "polars>=1.24",
