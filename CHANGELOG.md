@@ -9,3 +9,6 @@
 - Add size function for dataframe
 - Wrap describe for groupby
 - Expand rename function to work with list
+
+## [0.1.3] - 2025-05-30
+- Bugfix: Support complex variable substituion such as a very long list

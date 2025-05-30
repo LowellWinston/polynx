@@ -10,16 +10,16 @@ query_grammar = r"""
     ?statement: assignment | expr
     assignment: CNAME "=" expr -> assign    
 
-    ?expr: list_expr
+    ?expr: list_expr      
     | expr "|" and_expr -> or_expr
-    | and_expr
+    | and_expr     
    
     ?and_expr: and_expr "&" comp_expr -> and_expr
     | comp_expr
 
     ?comp_expr: arith_expr (COMP_OP arith_expr)+ -> chained_comparison
-    | arith_expr "in" list_expr -> in_expr
-    | arith_expr "not" "in" list_expr -> not_in_expr  
+    | arith_expr "in" expr -> in_expr
+    | arith_expr "not" "in" expr -> not_in_expr  
     | arith_expr -> bare_column_as_filter
 
     ?arith_expr: arith_expr "+" term -> add
@@ -45,6 +45,7 @@ query_grammar = r"""
     ?atom:  BACKTICKED_STRING   -> backticked  
     | constant
     | boolean
+    | variable  -> variable
     | "(" expr ")"        -> grouping      
 
     boolean: "True" -> true
@@ -80,6 +81,8 @@ query_grammar = r"""
     kwarg: CNAME "=" arg
 
     ?arg: expr
+
+    ?variable: "@" CNAME
        
     %import common.CNAME
     %import common.SIGNED_NUMBER
@@ -100,7 +103,13 @@ def to_pl_date(s):
         if DATETIME_RE.match(s):            
             return pl.lit(s).str.strptime(pl.Datetime, strict=False)
     return s
-   
+
+
+class VarNode:
+    def __init__(self, name): self.name = name
+    def __repr__(self): return f"VarNode({self.name!r})"
+
+
 # === Transformer ===
 class PolarsExprBuilder(Transformer):
     def __init__(self, df_schema=None, local_vars=None):
@@ -144,6 +153,16 @@ class PolarsExprBuilder(Transformer):
 
     def false(self, _):
         return False
+    
+    def variable(self, items):
+        return VarNode(str(items[0]))
+    
+    def resolve_var(self, value):
+        if isinstance(value, VarNode):
+            return self.local_vars[value.name]            
+        if isinstance(value, (list, tuple)):
+            return [self.resolve_var(i) for i in value]
+        return value
    
     @staticmethod
     def resolve_dtype(value: str):
@@ -195,6 +214,7 @@ class PolarsExprBuilder(Transformer):
 
     def chained_comparison(self, items):      
         result = None
+        items = self.resolve_var(items)
         left = to_pl_date(items[0])
         for i in range(1, len(items)-1, 2):
             op = items[i].value
@@ -211,15 +231,17 @@ class PolarsExprBuilder(Transformer):
             left = right
         return result
    
-    def list_expr(self, args):       
-        return args
+    def list_expr(self, args):        
+        return self.resolve_var(args) 
 
     def in_expr(self, args):
+        args = self.resolve_var(args)
         if isinstance(args[1][0], str) and DATE_RE.match(args[1][0]):                    
             args[0] = args[0].dt.date().cast(pl.Utf8)
         return args[0].is_in(args[1])
        
     def not_in_expr(self, args):
+        args = self.resolve_var(args)
         if isinstance(args[1][0], str) and DATE_RE.match(args[1][0]):            
             args[0] = args[0].dt.date().cast(pl.Utf8)
         return ~args[0].is_in(args[1])
@@ -228,10 +250,10 @@ class PolarsExprBuilder(Transformer):
         return (~args[0]).fill_null(True)
    
     def grouping(self, args):
-        return args[0]
+        return self.resolve_var(args[0])
 
     def bare_column_as_filter(self, args):
-        val = args[0]
+        val = self.resolve_var(args[0])
         if isinstance(val, str) and val in self.schema:
             return pl.col(val)
         return val
@@ -239,7 +261,7 @@ class PolarsExprBuilder(Transformer):
     # Multi-stmt assignment
     def assign(self, args):
         target_col = str(args[0])
-        expr = args[1]
+        expr = self.resolve_var(args[1])
         self.env[target_col] = expr
         if isinstance(expr, list):
             return pl.Series(target_col, expr)
@@ -250,11 +272,11 @@ class PolarsExprBuilder(Transformer):
     def multi_statements(self, args):
         return args # Just return the list of expressions or assignments
    
-    def register(self, name: str, func: callable):
-        self.user_func[name] = func
+    # def register(self, name: str, func: callable):
+    #     self.user_func[name] = func
 
-    def get_user_func(self, name: str):
-        return self.user_funcs.get(name)
+    # def get_user_func(self, name: str):
+    #     return self.user_funcs.get(name)
 
     def apply_method_chain(self, children):
         base = children[0]
@@ -298,7 +320,7 @@ class PolarsExprBuilder(Transformer):
 
     def dynamic_method(self, args):        
         method_name = str(args[0])
-        raw_args = args[1:]
+        raw_args = self.resolve_var(args[1:])
         func_args = [a for a in raw_args if a is not None]        
 
         def _method_call(arg, method):
@@ -346,7 +368,7 @@ class PolarsExprBuilder(Transformer):
             func = eval(str(args[0]))
         except:
             func = self.local_vars[str(args[0])]
-        raw_args = args[1:]
+        raw_args = self.resolve_var(args[1:])
         func_args = [a for a in raw_args if a is not None]
            
         if not func_args:
@@ -373,28 +395,12 @@ def dynamic_all_scopes(max_frames=10):
         return {}
 
 
-def substitute_var(expr: str, scope_vars):
-    """ Replaces @var with its actual value from the execution scope. """
-    def replace_var(match):
-        var_name = match.group(1)
-        if var_name not in scope_vars:
-            raise NameError(f"Variable '@{var_name}' is not defined.")
-        value = scope_vars[var_name]
-        if isinstance(value, str):
-            return f"'{value}'"
-        else:
-            return str(value)
-    return re.sub(r'@(\w+)', replace_var, expr)
-
-
 PL_PARSER = Lark(query_grammar, parser="lalr")
-
 
 def parse_polars_expr(query_str: str, df_schema=None, local_vars=None, return_cols=False):    
     if local_vars is None:
         local_vars = dynamic_all_scopes()    
-    expr = query_str.strip()
-    expr = substitute_var(expr, local_vars)    
+    expr = query_str.strip()    
     transformer = PolarsExprBuilder(df_schema=df_schema or [], local_vars=local_vars)
     tree = PL_PARSER.parse(expr)    
     parsed_tree = transformer.transform(tree)
