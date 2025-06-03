@@ -221,7 +221,6 @@ def plx_size(df, unit='mb', return_size=False):
     
 
 def plx_rename(self, *args, **kwargs):
-
     if len(args) == 1 and isinstance(args[0], list):
         cur_cols = _utils.columns(self)
         new_cols = args[0]
@@ -234,4 +233,7 @@ def plx_rename(self, *args, **kwargs):
     else:
         return wrap(unwrap(self).rename(*args, **kwargs))
 
+
+def plx_rolling_prod(self, *args, **kwargs):
+    return self.log().rolling_sum(*args, **kwargs).exp()
 

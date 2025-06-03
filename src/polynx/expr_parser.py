@@ -1,8 +1,14 @@
 from lark import Lark, Transformer, Tree
 import re
 import polars as pl
+import pandas as pd
+import numpy as np
 import inspect
 from .constant import POLARS_TYPES
+from .expr import Expr
+from .series import Series
+from .wrapper import wrap, unwrap
+
 
 # === Lark grammar
 query_grammar = r"""
@@ -158,10 +164,13 @@ class PolarsExprBuilder(Transformer):
         return VarNode(str(items[0]))
     
     def resolve_var(self, value):
+        #print("resolve_var called", value)        
         if isinstance(value, VarNode):
             return self.local_vars[value.name]            
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, list) and len(value) > 0:
             return [self.resolve_var(i) for i in value]
+        if isinstance(value, tuple) and len(value) > 0:
+            return tuple([self.resolve_var(i) for i in value])
         return value
    
     @staticmethod
@@ -263,7 +272,9 @@ class PolarsExprBuilder(Transformer):
         target_col = str(args[0])
         expr = self.resolve_var(args[1])
         self.env[target_col] = expr
-        if isinstance(expr, list):
+        if isinstance(expr, (Series, pl.Series)):
+            return expr.rename(target_col)
+        if isinstance(expr, (list, tuple, np.ndarray, pd.Series)):
             return pl.Series(target_col, expr)
         if isinstance(expr, (int, float, str, bool)):
             return pl.lit(expr).alias(target_col)
@@ -293,15 +304,17 @@ class PolarsExprBuilder(Transformer):
                 raise TypeError(f"Expected callable, got {type(fn)}: {fn}")
         return base      
 
-    @staticmethod
-    def get_args(node, args, kwargs):
-        if isinstance(node, tuple):
-            kwargs.update({node[0].value: node[1]})
+    def get_args(self, node, args, kwargs):
+        args = self.resolve_var(args)       
+        if isinstance(node, tuple):            
+            kwargs.update({node[0].value: self.resolve_var(node[1])})
         elif isinstance(node, Tree):
             for child in node.children:
-                PolarsExprBuilder.get_args(child, args, kwargs)
+                args = self.get_args(child, args, kwargs)                
         else:
             args.append(node)
+        
+        return args
 
     @staticmethod
     def extract_col_name(expr):
@@ -324,35 +337,39 @@ class PolarsExprBuilder(Transformer):
         func_args = [a for a in raw_args if a is not None]        
 
         def _method_call(arg, method):
-            if isinstance(arg, pl.Expr):
+            if isinstance(arg, (Expr, pl.Expr)):
                 return method(PolarsExprBuilder.extract_col_name(arg))
-            elif isinstance(arg, list):
+            elif isinstance(arg, tuple):
                 return method(PolarsExprBuilder.extract_column_names_from_list(arg))
             else:
                 return method(PolarsExprBuilder.extract_column_names_from_tree(arg))            
 
-        def wrapper(expr):
-            method = getattr(expr, method_name)
+        def wrapper(expr):            
+            expr = wrap(expr)                               
+            method = getattr(expr, method_name)            
+                        
             if not func_args:
-                return method()  
-
-            arg = func_args[0]
-            if method_name == "over":                                                            
-                return _method_call(arg, method)              
+                result = method()
+            else:
+                arg = func_args[0]
+                if method_name == "over":                                                            
+                    result = _method_call(arg, method)              
                
-            if method_name == "alias":                  
-                if isinstance(arg, str):
-                    return method(arg)
-                return _method_call(arg, method)
+                elif method_name == "alias":                  
+                    if isinstance(arg, str):
+                        result = method(arg)
+                    else:
+                        result = _method_call(arg, method)
 
-            if method_name in ['is_in', 'is_not_in']:
-                if isinstance(arg, list) and isinstance(arg[0], str) and DATE_RE.match(arg[0]):                                  
-                    method = getattr(expr.dt.date().cast(pl.Utf8), method_name)
-                return method(arg)
+                elif method_name in ['is_in', 'is_not_in']:
+                    if isinstance(arg, (list, tuple)) and isinstance(arg[0], str) and DATE_RE.match(arg[0]):                                  
+                        method = getattr(expr.dt.date().cast(pl.Utf8), method_name)                   
+                    result = method(arg)
 
-            _args, _kwargs = [], {}                      
-            PolarsExprBuilder.get_args(func_args[0], _args, _kwargs)            
-            return method(*_args, **_kwargs)          
+                _args, _kwargs = [], {}                      
+                _args = self.get_args(func_args[0], _args, _kwargs)                                                           
+                result = method(*_args, **_kwargs)
+            return unwrap(result) 
         return wrapper
 
     def namespace(self, args):              
@@ -368,14 +385,15 @@ class PolarsExprBuilder(Transformer):
             func = eval(str(args[0]))
         except:
             func = self.local_vars[str(args[0])]
-        raw_args = self.resolve_var(args[1:])
-        func_args = [a for a in raw_args if a is not None]
+        
+        raw_args = self.resolve_var(args[1:])        
+        func_args = [a for a in raw_args if a is not None]  
            
         if not func_args:
             return func()          
 
         _args, _kwargs = [], {}
-        PolarsExprBuilder.get_args(func_args[0], _args, _kwargs)
+        _args = self.get_args(func_args[0], _args, _kwargs)
         return func(*_args, **_kwargs)    
         
 

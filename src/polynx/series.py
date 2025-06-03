@@ -4,6 +4,7 @@ from .wrapper import wrap, unwrap
 class Series:
     def __init__(self, *args, **kwargs):
         self._pl = pl.Series(*args, **kwargs)
+        self._is_wrapped = True
 
     def __getattr__(self, name):
         attr = getattr(self._pl, name)

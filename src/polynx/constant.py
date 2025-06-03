@@ -8,11 +8,14 @@ POLARS_TYPES = {
     "Float64":      pl.Float64,
     "Float32":      pl.Float32,
     "Utf8":         pl.Utf8,
+    "String":       pl.String,
     "Boolean":      pl.Boolean,
     "Date":         pl.Date,
     "Datetime":     pl.Datetime,
+    "Duration":     pl.Duration,
     "Time" :        pl.Time,
-    "Categorical":  pl.Categorical
+    "Categorical":  pl.Categorical,
+    "Struct":       pl.Struct
 }
 
 PL_INT_DTYPES = {

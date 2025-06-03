@@ -23,9 +23,13 @@ def wrap(obj):
         new_obj._pl = obj
         return new_obj
     elif isinstance(obj, pl.Series):
-        return Series(obj)
+        new_obj = Series()
+        new_obj._pl = obj
+        return new_obj
     elif isinstance(obj, pl.Expr):
-        return Expr(obj)
+        new_obj = Expr()
+        new_obj._pl = obj
+        return new_obj
     elif isinstance(obj, (pl.dataframe.group_by.GroupBy, pl.lazyframe.group_by.LazyGroupBy)):
         return GroupBy(obj)
     return obj

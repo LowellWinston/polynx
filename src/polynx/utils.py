@@ -21,10 +21,7 @@ def plx_series_patch(plx_func_name, func):
 
 
 def get_schema(self):
-    #df = self.to_polars()       
-    #print(type(self))
     if isinstance(self, (pl.DataFrame, DataFrame)):
-        #print(self.schema)
         return self.schema
     if isinstance(self, (pl.LazyFrame, LazyFrame)):
         return self.collect_schema()
@@ -36,7 +33,6 @@ def schema(self):
 
 
 def get_columns(self):
-    #df = self.to_polars()
     if isinstance(self, (pl.DataFrame, DataFrame)):
         return self.columns
     elif isinstance(self, (pl.LazyFrame, LazyFrame)):
@@ -58,10 +54,6 @@ def to_plx_expr(self, arg):
         return parsed_expr
     else:
         return arg
-
-
-def plx_rolling_prod(expr, *args, **kwargs):
-    return expr.log().rolling_sum(*args, **kwargs).exp()
 
 
 def is_datetime_dtype(dtype):

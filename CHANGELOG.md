@@ -12,3 +12,9 @@
 
 ## [0.1.3] - 2025-05-30
 - Bugfix: Support complex variable substituion such as a very long list
+
+## [0.1.4] - 2025-06-03
+- Bugfix: plx.Series.cut error
+- Feature: Assignment supports list, tuple, np.ndarray, pd.Series, pl.Series and plx.Series
+- Feature: Add pl.String, pl.Struct, pl.Duration to supported datatype
+- Feature: Add rolling_prod for Expr
