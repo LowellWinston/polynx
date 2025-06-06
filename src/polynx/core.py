@@ -4,6 +4,7 @@ from .wrapper import unwrap, wrap
 import polars as pl
 import numpy as np
 from .utils import select, where, mondf
+from polynx import concat
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
@@ -108,13 +109,26 @@ def plx_wc(self, *args, **kwargs):
 
 
 # Polynx Groupby
-def plx_gb(self, gp_keys, expr):
+def plx_gb(self, gp_keys, expr, with_subtotal=False):
     df_schema = _utils.get_schema(self)    
     parsed_tree, cols = parse_polars_expr(query_str=expr, df_schema=df_schema, return_cols=True)
     self = self.wc(
         [pl.col(col).cast(pl.Float64) for col in cols if _utils.is_numeric_dtype(df_schema[col])]
     )
-    return self.group_by(gp_keys).agg(parsed_tree).sort(gp_keys)
+    result = self.group_by(gp_keys).agg(parsed_tree).sort(gp_keys)
+    if with_subtotal:
+        if isinstance(gp_keys, str):
+            gp_keys = [gp_keys]
+           
+        subgp_keys = gp_keys[:-1] if len(gp_keys) > 1 else None
+        if subgp_keys is not None:
+            subtotal_result = self.group_by(subgp_keys).agg(parsed_tree).sort(subgp_keys)
+        else:
+            subtotal_result = self.select(parsed_tree)
+        subtotal_result = subtotal_result.wc(pl.lit('All').alias(gp_keys[-1]))[_utils.columns(result)]        
+        result = concat([result, subtotal_result], how='vertical_relaxed')
+    return result
+    
 
 
 # Describe Groupby

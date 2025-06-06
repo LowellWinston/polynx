@@ -22,3 +22,4 @@
 ## [0.1.5] - 2025-06-06
 - Bugfix: Add deep_unwrap in io module to accomodate polars built-in functions like pl.concat, etc.
 - Feature: polynx inherits all functions in the namespace of polars
+- Feature: add subtotal function to the aggregation function gb
