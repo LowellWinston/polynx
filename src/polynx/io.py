@@ -1,34 +1,47 @@
 import polars as pl
-from .wrapper import wrap
-import types
-import inspect
+from .wrapper import wrap, unwrap
+#import inspect
 
 _wrapped_functions = {}
 
-def is_public_function(name):
-    return not name.startswith("_") and isinstance(getattr(pl, name), types.FunctionType)
+def is_public_callable(name):
+    return not name.startswith("_") and callable(getattr(pl, name))
 
 # Optionally skip certain functions you know aren't useful
 SKIP_NAMES = {"options", "config"}
 
-for name in dir(pl):
+def deep_unwrap(obj):
+    from collections.abc import Mapping, Sequence
+
+    # Avoid treating strings as Sequence
+    if isinstance(obj, (list, tuple)):
+        return type(obj)(deep_unwrap(x) for x in obj)
+    elif isinstance(obj, dict):
+        return {deep_unwrap(k): deep_unwrap(v) for k, v in obj.items()}   
+    elif isinstance(obj, set):
+        return set(deep_unwrap(x) for x in obj)
+    else:
+        try:
+            return unwrap(obj)
+        except Exception:
+            return obj
+
+
+for name in dir(pl):    
     if name in SKIP_NAMES:
         continue
-    if not is_public_function(name):
+    if not is_public_callable(name):
         continue
 
     fn = getattr(pl, name)
 
-    # Use the signature to ensure it returns something wrap-able
-    sig = inspect.signature(fn)
-
-    # Only include if it's likely to return a Polars object
-    # (We'll wrap anyway, and let wrap() handle fallback)
     def make_wrapped(fn):
-        def wrapped_fn(*args, **kwargs):
-            return wrap(fn(*args, **kwargs))
-        wrapped_fn.__name__ = fn.__name__
-        wrapped_fn.__doc__ = fn.__doc__
+        def wrapped_fn(*args, **kwargs):            
+            unwrapped_args = deep_unwrap(args)
+            unwrapped_kwargs = deep_unwrap(kwargs)
+            return wrap(fn(*unwrapped_args, **unwrapped_kwargs))
+        wrapped_fn.__name__ = name
+        wrapped_fn.__doc__ = getattr(fn, '__doc__', '')
         return wrapped_fn
 
     try:

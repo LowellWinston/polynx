@@ -18,3 +18,7 @@
 - Feature: Assignment supports list, tuple, np.ndarray, pd.Series, pl.Series and plx.Series
 - Feature: Add pl.String, pl.Struct, pl.Duration to supported datatype
 - Feature: Add rolling_prod for Expr
+
+## [0.1.5] - 2025-06-06
+- Bugfix: Add deep_unwrap in io module to accomodate polars built-in functions like pl.concat, etc.
+- Feature: polynx inherits all functions in the namespace of polars
