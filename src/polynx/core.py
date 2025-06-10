@@ -4,7 +4,6 @@ from .wrapper import unwrap, wrap
 import polars as pl
 import numpy as np
 from .utils import select, where, mondf
-from polynx import concat
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
@@ -126,7 +125,7 @@ def plx_gb(self, gp_keys, expr, with_subtotal=False):
         else:
             subtotal_result = self.select(parsed_tree)
         subtotal_result = subtotal_result.wc(pl.lit('All').alias(gp_keys[-1]))[_utils.columns(result)]        
-        result = concat([result, subtotal_result], how='vertical_relaxed')
+        result = wrap(pl.concat([unwrap(result), unwrap(subtotal_result)], how='vertical_relaxed'))
     return result
     
 

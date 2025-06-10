@@ -25,3 +25,6 @@
 
 ## [0.1.6] - 2025-06-06
 - Feature: add subtotal function to the aggregation function gb
+
+## [0.1.7] - 2025-06-10
+- Bugfix: use pl.concat instead of polynx.concat in core.py
