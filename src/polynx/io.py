@@ -3,9 +3,9 @@ from .wrapper import wrap, unwrap
 #import inspect
 
 _wrapped_functions = {}
-
+polynx_types = ["DataFrame", "LazyFrame", "Series", "Expr"]
 def is_public_callable(name):
-    return not name.startswith("_") and callable(getattr(pl, name))
+    return not name.startswith("_") and callable(getattr(pl, name)) and name not in polynx_types
 
 # Optionally skip certain functions you know aren't useful
 SKIP_NAMES = {"options", "config"}

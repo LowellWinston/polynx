@@ -183,42 +183,55 @@ class PolarsExprBuilder(Transformer):
         return PolarsExprBuilder.resolve_dtype("pl." + str(items[0]))
        
     def kwarg(self, args):
+        args = self.resolve_var(args)        
         return (args[0], args[1])
 
     def neg(self, val):
+        val = self.resolve_var(val)
         return -val[0]
 
     def bitnot(self, val):
+        val = self.resolve_var(val)
         return ~val[0]
 
     def not_(self, val):
+        val = self.resolve_var(val)
         return ~val[0]
 
     def add(self, args):
+        args = self.resolve_var(args)
         return args[0] + args[1]
 
     def sub(self, args):
+        args = self.resolve_var(args)
         return args[0] - args[1]
 
     def mul(self, args):
+        args = self.resolve_var(args)
         return args[0] * args[1]
 
     def div(self, args):
+        args = self.resolve_var(args)
         return args[0] / args[1]
 
     def floordiv(self, args):
+        args = self.resolve_var(args)
         return args[0] // args[1]
 
     def mod(self, args):
+        args = self.resolve_var(args)
         return args[0] % args[1]
 
     def power(self, args):
+        args = self.resolve_var(args)
         return args[0] ** args[1]
 
     def and_expr(self, args):
+        args = self.resolve_var(args)
         return args[0] & args[1]
 
     def or_expr(self, args):
+        args = self.resolve_var(args)
         return args[0] | args[1]
 
     def chained_comparison(self, items):      
@@ -256,6 +269,7 @@ class PolarsExprBuilder(Transformer):
         return ~args[0].is_in(args[1])
        
     def not_(self, args):
+        args = self.resolve_var(args)
         return (~args[0]).fill_null(True)
    
     def grouping(self, args):
@@ -365,10 +379,11 @@ class PolarsExprBuilder(Transformer):
                     if isinstance(arg, (list, tuple)) and isinstance(arg[0], str) and DATE_RE.match(arg[0]):                                  
                         method = getattr(expr.dt.date().cast(pl.Utf8), method_name)                   
                     result = method(arg)
-
-                _args, _kwargs = [], {}                      
-                _args = self.get_args(func_args[0], _args, _kwargs)                                                           
-                result = method(*_args, **_kwargs)
+                    
+                else:
+                    _args, _kwargs = [], {}                      
+                    _args = self.get_args(func_args[0], _args, _kwargs)                                                           
+                    result = method(*_args, **_kwargs)
             return unwrap(result) 
         return wrapper
 

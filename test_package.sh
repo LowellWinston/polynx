@@ -7,14 +7,41 @@ PACKAGE_NAME="polynx"
 DIST_DIR="dist"
 VENV_DIR="../venv"
 
-echo "🔧 Creating virtual environment..."
+#echo "🔧 Creating virtual environment..."
 #python3 -m venv "$VENV_DIR"
-source "$VENV_DIR/bin/activate"
+if [[ -z "$VIRTUAL_ENV" ]]; then
+  echo "🧪 Not inside a virtual environment. Activating $VENV_DIR..."
+  source "$VENV_DIR/bin/activate"
+else
+  echo "🧪 Already inside a virtual environment: $VIRTUAL_ENV"
+fi
 
-#echo "⬆️  Upgrading pip, setuptools, and wheel..."
-#pip install --upgrade pip setuptools wheel
+# Extract version from setup.py
+SETUP_VERSION=$(sed -nE "s/.*version\s*=\s*['\"]([0-9]+\.[0-9]+(\.[0-9]+)?)['\"].*/\1/p" setup.py)
+
+REBUILD_NEEDED=false
 
 if [ ! -d "$DIST_DIR" ]; then
+    echo "📦 dist directory not found. Rebuilding..."
+    REBUILD_NEEDED=true
+else
+    LATEST_FILE=$(ls -t $DIST_DIR/${PACKAGE_NAME}-*.whl 2>/dev/null | head -1)
+    if [ -z "$LATEST_FILE" ]; then
+        echo "📦 No existing wheel found. Rebuilding..."
+        REBUILD_NEEDED=true
+    else
+        DIST_VERSION=$(echo "$LATEST_FILE" | sed -E "s|.*${PACKAGE_NAME}-([0-9]+\.[0-9]+(\.[0-9]+)?).*|\1|")
+
+        if [ "$SETUP_VERSION" != "$DIST_VERSION" ]; then
+            echo "🔁 Version mismatch: setup.py=$SETUP_VERSION, dist=$DIST_VERSION. Rebuilding..."
+            REBUILD_NEEDED=true
+        else
+            echo "✅ Package version $SETUP_VERSION already built. Skipping rebuild."
+        fi
+    fi
+fi
+
+if [ "$REBUILD_NEEDED" = true ]; then
     echo "📦 Building package..."
     python3 -m build
 fi

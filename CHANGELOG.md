@@ -28,3 +28,8 @@
 
 ## [0.1.7] - 2025-06-10
 - Bugfix: use pl.concat instead of polynx.concat in core.py
+
+## [0.1.8] - 2025-06-11
+- Bugfix: unshadow polynx.DataFrame, polynx.LazyFrame, polynx.Expr, polynx.Series
+- Bugfix: .alias() is not parsed correctly
+- Bugfix: Resolve variable substitution inside arithmatic calculations

@@ -37,3 +37,13 @@ print("Test lazy.describe:", df.lazy().describe())
 print("Tests describe:", df.describe(group_keys='B', selected_columns=['A','E']).round())
 
 print('✅ Function ran successfully')
+
+print("type(plx.DataFrame) = ", type(plx.DataFrame))
+print("type(plx.LazyFrame) = ", type(plx.LazyFrame))
+print("type(plx.Series) = ", type(plx.Series))
+print("type(plx.Expr) = ", type(plx.Expr))
+print("Test alias", df.eval(" (A + 1).alias('A')"))
+num = 4
+print("Test var in arithimatic calcultion", df.eval(" where(A>1, 1 + E.pow(@num/12), 0)"))
+
+
