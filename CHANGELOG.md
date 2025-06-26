@@ -33,3 +33,7 @@
 - Bugfix: unshadow polynx.DataFrame, polynx.LazyFrame, polynx.Expr, polynx.Series
 - Bugfix: .alias() is not parsed correctly
 - Bugfix: Resolve variable substitution inside arithmatic calculations
+
+## [0.1.9] - 2025-06-12
+- Bugfix: .over() to support list as argument
+- Add project logo

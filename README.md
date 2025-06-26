@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="https://github.com/LowellWinston/polynx/assets/logo.png" width="120" alt="Project Logo">
+</p>
+
+
 # Polynx
 String-powered Polars expression engine with extended DataFrame utilities. 
 

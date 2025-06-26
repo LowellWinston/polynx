@@ -353,7 +353,7 @@ class PolarsExprBuilder(Transformer):
         def _method_call(arg, method):
             if isinstance(arg, (Expr, pl.Expr)):
                 return method(PolarsExprBuilder.extract_col_name(arg))
-            elif isinstance(arg, tuple):
+            elif isinstance(arg, (tuple, list)):
                 return method(PolarsExprBuilder.extract_column_names_from_list(arg))
             else:
                 return method(PolarsExprBuilder.extract_column_names_from_tree(arg))            
