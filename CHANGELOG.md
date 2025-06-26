@@ -37,3 +37,6 @@
 ## [0.1.9] - 2025-06-12
 - Bugfix: .over() to support list as argument
 - Add project logo
+
+## [0.1.10] - 2025-06-12
+- Add readme_renderer[md] to enable logo display in PyPi

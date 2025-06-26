@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://github.com/LowellWinston/polynx/raw/master/assets/logo.png" width="120" alt="Project Logo">
-</p>
+![Polynx logo]("https://github.com/LowellWinston/polynx/raw/master/assets/logo.png")
 
 
 # Polynx
