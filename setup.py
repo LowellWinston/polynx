@@ -15,7 +15,7 @@ setup(
     author_email='lowell.j.winston@gmail.com',
     description='String-powered Polars expression engine with extended DataFrame utilities.',
     long_description=open('README.md').read(),
-    long_description_content_type="A polars wrapper that support .query and .eval similar to pandas",
+    long_description_content_type="text/markdown",
     url="https://github.com/LowellWinston/polynx.git",  
     classifiers=[
         'Programming Language :: Python :: 3',
