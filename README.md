@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/LowellWinston/polynx/assets/logo.png" width="120" alt="Project Logo">
+  <img src="https://github.com/LowellWinston/polynx/tree/master/assets/logo.png" width="120" alt="Project Logo">
 </p>
 
 
