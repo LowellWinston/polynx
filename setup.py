@@ -2,14 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name="polynx",  
-    version="0.1.10",
+    version="0.1.11",
     packages=find_packages(),
     install_requires=[  
-        "polars>=1.24",
+        "polars>=1.8",
         "lark>=1.2.2",
-        "matplotlib>=3.8.2",
-        "pandas>=2.1.4",
-        "numpy>=1.26.2",
+        "matplotlib>=3.7",
+        "pandas>=2.0.0",
+        "numpy>=1.24",
     ],
     author='Lowell Winsston',
     author_email='lowell.j.winston@gmail.com',

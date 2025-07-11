@@ -8,7 +8,13 @@ from .constant import POLARS_TYPES
 from .expr import Expr
 from .series import Series
 from .wrapper import wrap, unwrap
+import hashlib
+import logging
+from functools import lru_cache
+from collections import OrderedDict
+from .config import get_cache_mode, get_cache_max_size
 
+logger = logging.getLogger("polynx")
 
 # === Lark grammar
 query_grammar = r"""
@@ -118,11 +124,17 @@ class VarNode:
 
 # === Transformer ===
 class PolarsExprBuilder(Transformer):
+    _registered_udfs = {}
+
+    @classmethod
+    def register_udf(cls, name, fn):
+        cls._registered_udfs[name] = fn
+
     def __init__(self, df_schema=None, local_vars=None):
         self.schema = set(df_schema or [])
         self.cols = set()
-        self.env = {}
-        self.local_vars = local_vars or {}
+        self.env = {}        
+        self.local_vars = {**PolarsExprBuilder._registered_udfs, **(local_vars or {})}
 
     def column(self, token):           
         name = str(token[0])
@@ -427,17 +439,163 @@ def dynamic_all_scopes(max_frames=10):
     except AttributeError:
         return {}
 
-
 PL_PARSER = Lark(query_grammar, parser="lalr")
 
-def parse_polars_expr(query_str: str, df_schema=None, local_vars=None, return_cols=False):    
+def parse_pl_expr(query_str: str, df_schema, local_vars=None, return_cols=False):    
     if local_vars is None:
         local_vars = dynamic_all_scopes()    
     expr = query_str.strip()    
-    transformer = PolarsExprBuilder(df_schema=df_schema or [], local_vars=local_vars)
+    transformer = PolarsExprBuilder(df_schema=df_schema, local_vars=local_vars)
     tree = PL_PARSER.parse(expr)    
     parsed_tree = transformer.transform(tree)
     if return_cols:
         return parsed_tree, transformer.cols
     else:
         return parsed_tree
+
+def register_udf(name: str, fn: callable):    
+    PolarsExprBuilder.register_udf(name, fn)
+
+def register_udfs_from_module(module):
+    for name, fn in inspect.getmembers(module, inspect.isfunction):
+        register_udf(name, fn)
+
+def register_udfs_by_names(module, names: list[str]):
+    """ Register udf by name for a given module"""
+    for name in names:
+        fn = getattr(module, name)
+        register_udf(name, fn)
+
+
+# Global Cache Containers
+_raw_cache = {}
+_hash_cache = {}
+cache_stats = {"hit": 0, "miss": 0}
+
+_warned = {
+    "raw": False,
+    "hash": False,
+    "custom_lru": False    
+}
+
+# Custom LRU Cache
+class ExprCacheLRU:
+    def __init__(self, max_size=1000):
+        self.max_size = max_size
+        self.store = OrderedDict()
+
+    def get(self, expr_str):
+        key = self._hash(expr_str)
+        if key in self.store:
+            self.store.move_to_end(key)
+            return self.store[key]
+        return None
+
+    def set(self, expr_str, parsed):
+        key = self._hash(expr_str)
+        self.store[key] = parsed
+        self.store.move_to_end(key)
+        if len(self.store) == self.max_size and not _warned["custom_lru"]:
+            logger.warning("⚠️ Expression cache (custom_lru) reached max size: %d", self.max_size)
+            _warned["custom_lru"] = True
+        if len(self.store) > self.max_size:
+            self.store.popitem(last=False)
+
+    def clear(self):
+        self.store.clear()
+
+    @staticmethod
+    def _hash(expr_str):
+        return hashlib.sha1(expr_str.encode("utf-8")).hexdigest()
+
+_custom_lru_cache = ExprCacheLRU(max_size=get_cache_max_size())
+
+## Caching Backends
+def _parse_with_raw_dict(query_str: str, *args, **kwargs):
+    if query_str in _raw_cache:
+        cache_stats["hit"] += 1
+        return _raw_cache[query_str]
+    cache_stats["miss"] += 1
+    if not _warned["raw"] and len(_raw_cache) >= get_cache_max_size():
+        logger.warning("⚠️ Expression cache (raw) reached max size.")
+        _warned["raw"] = True
+    parsed = parse_pl_expr(query_str, *args, **kwargs)
+    _raw_cache[query_str] = parsed
+    return parsed
+
+def _parse_with_hashed_dict(query_str: str, *args, **kwargs):
+    key = hashlib.sha1(query_str.encode("utf-8")).hexdigest()
+    if key in _hash_cache:
+        cache_stats["hit"] += 1
+        return _hash_cache[key]
+    cache_stats["miss"] += 1
+    if not _warned["hash"] and len(_hash_cache) >= get_cache_max_size():
+        logger.warning("⚠️ Expression cache (hash) reached max size.")
+        _warned["hash"] = True
+    parsed = parse_pl_expr(query_str, *args, **kwargs)
+    _hash_cache[key] = parsed
+    return parsed
+
+def _parse_with_custom_lru(query_str: str, *args, **kwargs):
+    cached = _custom_lru_cache.get(query_str)
+    if cached is not None:
+        cache_stats["hit"] += 1
+        return cached
+    cache_stats["miss"] += 1
+    parsed = parse_pl_expr(query_str, *args, **kwargs)
+    _custom_lru_cache.set(query_str, parsed)
+    return parsed
+
+# Public Interface
+def parse_polars_expr(query_str: str, df_schema, local_vars=None, return_cols=False):
+    mode = get_cache_mode()
+    if mode == "raw":
+        return _parse_with_raw_dict(query_str, df_schema, local_vars, return_cols)
+    elif mode == "hash":
+        return _parse_with_hashed_dict(query_str, df_schema, local_vars, return_cols)
+    elif mode == "custom_lru":
+        return _parse_with_custom_lru(query_str, df_schema, local_vars, return_cols)
+    else:
+        raise ValueError(f"Unsupported CACHE_MODE: {mode}")
+
+
+# Cache Utility Functions
+def clear_all_expr_caches():
+    _raw_cache.clear()
+    _hash_cache.clear()
+    _custom_lru_cache.clear()
+    if hasattr(_parse_with_lru, "cache_clear"):
+        _parse_with_lru.cache_clear()
+    cache_stats["hit"] = 0
+    cache_stats["miss"] = 0
+    for k in _warned:
+        _warned[k] = False
+
+def get_expr_cache():
+    mode = get_cache_mode()
+    if mode == "raw":
+        return dict(_raw_cache)
+    elif mode == "hash":
+        return dict(_hash_cache)
+    elif mode == "custom_lru":
+        return dict(_custom_lru_cache.store)    
+    else:
+        return {"error": f"Unknown cache mode {mode}"}
+
+def get_expr_cache_size():
+    mode = get_cache_mode()
+    if mode == "raw":
+        return len(_raw_cache)
+    elif mode == "hash":
+        return len(_hash_cache)
+    elif mode == "custom_lru":
+        return len(_custom_lru_cache.store)    
+    else:
+        return -1
+
+def get_expr_cache_stats():
+    return dict(cache_stats)
+
+def reset_expr_cache_stats():
+    cache_stats["hit"] = 0
+    cache_stats["miss"] = 0

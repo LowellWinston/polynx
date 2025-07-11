@@ -1,3 +1,4 @@
+import polynx
 import polynx as plx
 import numpy as np
 
@@ -28,16 +29,11 @@ for query_str in ["select([A <1, B in ['abc']], [1, E], @var1)"]:
     print(df.wc(query_str))
 
 print("Test gb", df.gb('B', 'A.sum()'))
-
 print("Test gb with subtotal", df.gb('B', 'A.sum()', with_subtotal=True))
-
 print("Test plx.concat:", plx.concat([df, df]))
-
 print("Test lazy.describe:", df.lazy().describe())
 print("Tests describe:", df.describe(group_keys='B', selected_columns=['A','E']).round())
-
 print('✅ Function ran successfully')
-
 print("type(plx.DataFrame) = ", type(plx.DataFrame))
 print("type(plx.LazyFrame) = ", type(plx.LazyFrame))
 print("type(plx.Series) = ", type(plx.Series))
@@ -45,5 +41,4 @@ print("type(plx.Expr) = ", type(plx.Expr))
 print("Test alias", df.eval(" (A + 1).alias('A')"))
 num = 4
 print("Test var in arithimatic calcultion", df.eval(" where(A>1, 1 + E.pow(@num/12), 0)"))
-
-
+print("cached expr", polynx.expr_parser.get_expr_cache())
