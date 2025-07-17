@@ -1,4 +1,4 @@
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 from . import core
 from .utils import plx_frame_patch, plx_expr_patch, DataFrame, LazyFrame, Series, Expr, plx_merge as merge
 from . import io 
@@ -14,7 +14,7 @@ for name in [
     'eval','assign','dd', "dsort", "asort", "unstack", 
     "pplot", "vcnt", "ucnt", "query", "eval", "wc", "gb", 
     "describe", "round", "cum_max", "to_list", "max", "min",
-    "rename", "size", "to_pandas"
+    "rename", "size"
 ]:
     plx_frame_patch(name, getattr(core, f"plx_{name}"))
 

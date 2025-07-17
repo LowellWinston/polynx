@@ -42,3 +42,4 @@ print("Test alias", df.eval(" (A + 1).alias('A')"))
 num = 4
 print("Test var in arithimatic calcultion", df.eval(" where(A>1, 1 + E.pow(@num/12), 0)"))
 print("cached expr", polynx.expr_parser.get_expr_cache())
+print("Testing complete successfully!")

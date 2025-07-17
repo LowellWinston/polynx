@@ -14,8 +14,7 @@ class LazyFrame:
             _pl = super().__getattribute__("_pl")
             attr = getattr(_pl, name)
             if callable(attr):
-                def wrapped(*args, **kwargs):
-                    from polynx.wrapper import wrap, unwrap
+                def wrapped(*args, **kwargs):                    
                     return wrap(attr(*[unwrap(a) for a in args], **{k: unwrap(v) for k, v in kwargs.items()}))
                 return wrapped
             return attr  
@@ -34,4 +33,7 @@ class LazyFrame:
         return f"PolynxLazyFrame:\n{repr(self._pl)}"
 
     def to_polars(self):
-        return self._pl    
+        return self._pl   
+
+    def to_pandas(self):
+        return self._pl.collect().to_pandas() 

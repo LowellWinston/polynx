@@ -44,3 +44,7 @@
 ## [0.1.11] - 2025-0710
 - Added UDF registration function to better manage UDF inside string parser
 - Added cache function for string parser so that it will cache all parsed expression to avoid repeated parsing the same string expression
+
+## [0.1.12] - 2025-0717
+- Bugfix: to_pandas() now works with DataFrame, LazyFrame and Series
+- Lowered dependency package requirements

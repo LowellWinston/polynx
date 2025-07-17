@@ -218,13 +218,7 @@ def plx_min(self, col_name=None):
     if isinstance(df, _utils.LazyFrame):
         df_earger = df_earger.collect()
     return df_earger.item()    
-
-def plx_to_pandas(self):
-    if isinstance(self, (_utils.DataFrame, _utils.Series)):
-        return self.to_pandas()
-    else:
-        raise(f"It is not a polynx.DataFrame or polynx.Series object and cannot be converted to pandas!")
-    
+   
 
 def plx_size(df, unit='mb', return_size=False):
     _size = np.round(df.estimated_size(unit),2)  

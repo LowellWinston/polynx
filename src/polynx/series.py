@@ -24,3 +24,6 @@ class Series:
     
     def to_polars(self):
         return self._pl
+
+    def to_pandas(self):
+        return self._pl.to_pandas()

@@ -5,16 +5,22 @@ set -o pipefail
 
 PACKAGE_NAME="polynx"
 DIST_DIR="dist"
+BUILD_DIR="build"
 VENV_DIR="../venv"
+
+rm -rf $DIST_DIR
+rm -rf $BUILD_DIR
 
 #echo "🔧 Creating virtual environment..."
 #python3 -m venv "$VENV_DIR"
-if [[ -z "$VIRTUAL_ENV" ]]; then
-  echo "🧪 Not inside a virtual environment. Activating $VENV_DIR..."
-  source "$VENV_DIR/bin/activate"
-else
-  echo "🧪 Already inside a virtual environment: $VIRTUAL_ENV"
-fi
+# if [[ -z "$VIRTUAL_ENV" ]]; then
+#   echo "🧪 Not inside a virtual environment. Activating $VENV_DIR..."
+#   source "$VENV_DIR/bin/activate"
+# else
+#   echo "🧪 Already inside a virtual environment: $VIRTUAL_ENV"
+# fi
+
+source "$VENV_DIR/bin/activate"
 
 # Extract version from setup.py
 SETUP_VERSION=$(sed -nE "s/.*version\s*=\s*['\"]([0-9]+\.[0-9]+(\.[0-9]+)?)['\"].*/\1/p" setup.py)
