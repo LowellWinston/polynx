@@ -29,7 +29,7 @@ def plx_assign(self, query_str):
 
 
 def plx_dd(self):
-	return self.unique(maintain_order=True)
+	return self.unique(maintain_order=True, keep='first')
 
 
 def plx_dsort(self, by=None):

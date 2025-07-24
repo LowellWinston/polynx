@@ -460,7 +460,8 @@ def register_udfs_from_module(module):
     for name, fn in inspect.getmembers(module, inspect.isfunction):
         register_udf(name, fn)
 
-def register_udfs_by_names(module, names: list[str]):
+from typing import List
+def register_udfs_by_names(module, names: List[str]):
     """ Register udf by name for a given module"""
     for name in names:
         fn = getattr(module, name)

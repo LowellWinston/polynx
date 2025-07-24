@@ -48,3 +48,9 @@
 ## [0.1.12] - 2025-0717
 - Bugfix: to_pandas() now works with DataFrame, LazyFrame and Series
 - Lowered dependency package requirements
+
+## [0.1.13] - 2025-07-24
+- Updated dd to handle columns with missing value
+- Added case_when to unite select and where function
+- Replace list[str] with List[str] to be compatible with Python 3.8 or below
+- Register max_horizontal and min_horizontal from polars
