@@ -124,7 +124,7 @@ def case_when(conds, choices, default):
     if isinstance(conds, list):
         return select(conds, choices, default)
     else:
-        return where(cond, choice, default)
+        return where(conds, choices, default)
         
 
 def mondf(beg_date, end_date):

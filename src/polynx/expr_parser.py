@@ -565,8 +565,6 @@ def clear_all_expr_caches():
     _raw_cache.clear()
     _hash_cache.clear()
     _custom_lru_cache.clear()
-    if hasattr(_parse_with_lru, "cache_clear"):
-        _parse_with_lru.cache_clear()
     cache_stats["hit"] = 0
     cache_stats["miss"] = 0
     for k in _warned:

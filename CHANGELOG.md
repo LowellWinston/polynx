@@ -54,3 +54,7 @@
 - Added case_when to unite select and where function
 - Replace list[str] with List[str] to be compatible with Python 3.8 or below
 - Register max_horizontal and min_horizontal from polars
+
+## [0.1.14] - 2025-10-02
+- Bugfix: case_when and clear_all_expr_caches buf fix 
+- Added clear_all_expr_caches to __init__.py

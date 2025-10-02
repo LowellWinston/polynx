@@ -1,8 +1,8 @@
-__version__ = "0.1.13"
+__version__ = "0.1.14"
 from . import core
 from .utils import plx_frame_patch, plx_expr_patch, DataFrame, LazyFrame, Series, Expr, plx_merge as merge
 from . import io 
-from .expr_parser import register_udfs_by_names, register_udf, parse_polars_expr
+from .expr_parser import register_udfs_by_names, register_udf, parse_polars_expr, clear_all_expr_caches
 from . import utils 
 import polars
 
