@@ -7,7 +7,7 @@ df = plx.DataFrame({
     'B': ['abc', 'bc', 'aaa', None], 
     'C': ['2023-01-01','2021-01-01','2009-11-01','2000-11-11'],
     'E': [1.1, 2.1, 3.5, 0]}
-).wc(plx.col('C').str.to_datetime(format='%Y-%m-%d',time_unit='ns').dt.date())
+).wc("C.str.to_date('%Y-%m-%d')")
 
 var1 = 0
 var2 = 10
@@ -24,10 +24,11 @@ for query_str in ["@var1 <= A < @var2 & C.dt.year() >=2020 & B in @var4", "B.str
     print(query_str)
     print(df.query(query_str))
     
-for query_str in ["select([A <1, B in ['abc']], [1, E], @var1)"]:
+for query_str in ["case_when([A <1, B in ['abc']], [1, E], @var1)"]:
     print(query_str)
     print(df.wc(query_str))
 
+print("Test mondf", df.wc("diff = mondf(C, C.shift()); C_lag = C.shift()"))
 print("Test gb", df.gb('B', 'A.sum()'))
 print("Test gb with subtotal", df.gb('B', 'A.sum()', with_subtotal=True))
 print("Test plx.concat:", plx.concat([df, df]))
@@ -40,6 +41,10 @@ print("type(plx.Series) = ", type(plx.Series))
 print("type(plx.Expr) = ", type(plx.Expr))
 print("Test alias", df.eval(" (A + 1).alias('A')"))
 num = 4
-print("Test var in arithimatic calcultion", df.eval(" where(A>1, 1 + E.pow(@num/12), 0)"))
-print("cached expr", polynx.expr_parser.get_expr_cache())
+print("Test var in arithimatic calcultion", df.eval(" case_when(A>1, 1 + E.pow(@num/12), 0)"))
+print("Test cached expr", polynx.expr_parser.get_expr_cache())
+print("Test variable substitution in loops")
+tmp = plx.DataFrame()
+for i in [0, 100]:
+    print(tmp.wc("A = @i"))
 print("Testing complete successfully!")

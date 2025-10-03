@@ -58,3 +58,6 @@
 ## [0.1.14] - 2025-10-02
 - Bugfix: case_when and clear_all_expr_caches buf fix 
 - Added clear_all_expr_caches to __init__.py
+
+## [0.1.15] - 2025-10-02
+- Features: Add non-cache mode as an option to disable cache mode and disable cache for variable substituion

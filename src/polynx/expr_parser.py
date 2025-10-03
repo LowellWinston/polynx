@@ -469,6 +469,8 @@ def register_udfs_by_names(module, names: List[str]):
 
 
 # Global Cache Containers
+# PROS: Caching helps reduce runtime significantly when using lazyframes
+# CONS: An unintended consequence is for variable substituions with @var in a loop, where var changes are ignored due to caching
 _raw_cache = {}
 _hash_cache = {}
 cache_stats = {"hit": 0, "miss": 0}
@@ -547,10 +549,16 @@ def _parse_with_custom_lru(query_str: str, *args, **kwargs):
     _custom_lru_cache.set(query_str, parsed)
     return parsed
 
+def _parse_without_cache(query_str: str, *args, **kwargs):    
+    return parse_pl_expr(query_str, *args, **kwargs)
+
+    
 # Public Interface
 def parse_polars_expr(query_str: str, df_schema, local_vars=None, return_cols=False):
     mode = get_cache_mode()
-    if mode == "raw":
+    if mode == "none" or '@' in query_str:
+        return _parse_without_cache(query_str, df_schema, local_vars, return_cols)
+    elif mode == "raw":
         return _parse_with_raw_dict(query_str, df_schema, local_vars, return_cols)
     elif mode == "hash":
         return _parse_with_hashed_dict(query_str, df_schema, local_vars, return_cols)

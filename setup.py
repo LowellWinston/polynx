@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="polynx",  
-    version="0.1.14",
+    version="0.1.15",
     packages=find_packages(),
     install_requires=[  
         "polars>=1.8",

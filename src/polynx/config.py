@@ -1,9 +1,9 @@
-CACHE_MODE = "raw"
+CACHE_MODE = "raw" 
 CACHE_MAX_SIZE = 1000
 
 def set_cache_mode(mode: str):
     global CACHE_MODE
-    if mode not in {"raw", "hash", "custom_lru"}:
+    if mode not in {"raw", "hash", "custom_lru", "none"}:
         raise ValueError(f"Invalid CACHE_MODE: {mode}")
     CACHE_MODE = mode
 

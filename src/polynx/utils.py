@@ -128,5 +128,5 @@ def case_when(conds, choices, default):
         
 
 def mondf(beg_date, end_date):
-    return (end_date.dt.year() - beg_date.dt.year())*100 + end_date.dt.month() - beg_date.dt.month()
+    return (end_date.dt.year() - beg_date.dt.year())*12 + end_date.dt.month() - beg_date.dt.month()
 
