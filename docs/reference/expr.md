@@ -2,6 +2,11 @@
 
 `polynx.Expr` wraps `polars.Expr` and provides extended mathematical operations.
 
+!!! note "Standard Polars Expressions"
+    `polynx.Expr` delegates all standard Polars expression methods (e.g., `.alias()`, `.sum()`, `.mean()`, `.round()`, `.str`, `.dt`, etc.).
+    
+    For all standard Polars expressions, please refer to the [Official Polars Expressions Reference](https://docs.pola.rs/api/python/stable/reference/expressions/index.html).
+
 ---
 
 ## Extended Expression Methods

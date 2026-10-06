@@ -8,6 +8,11 @@ import polynx as plx
 lazy_df = plx.DataFrame(data).lazy()
 ```
 
+!!! note "Standard Polars LazyFrame Methods"
+    `polynx.LazyFrame` inherits all native Polars lazy operations and optimization passes.
+    
+    This page covers only the **Polynx-specific lazy extensions**. For standard Polars LazyFrame methods, please refer to the [Official Polars LazyFrame Reference](https://docs.pola.rs/api/python/stable/reference/lazyframe/index.html).
+
 ---
 
 ## Lazy Execution Model

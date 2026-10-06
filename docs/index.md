@@ -18,6 +18,11 @@
 
 With Polynx, you can write filtering criteria, multi-statement mutations, conditional branching (`case_when`, `select`, `where`), and group aggregations using simple string expressions without verbose nested method calls—all while retaining the speed, thread safety, and query planning of Polars.
 
+!!! info "Relationship to Polars"
+    Polynx is built on top of [Polars](https://pola.rs). It wraps native Polars objects while inheriting all built-in methods.
+    
+    This documentation focuses exclusively on **Polynx-specific extensions**. For native Polars functions, methods, expressions, and algorithms, refer directly to the [Official Polars Python API Reference](https://docs.pola.rs/api/python/stable/reference/index.html).
+
 ---
 
 ## Key Highlights

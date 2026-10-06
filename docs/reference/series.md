@@ -8,6 +8,11 @@ import polynx as plx
 s = plx.Series("name", [1, 2, 3, 4])
 ```
 
+!!! note "Standard Polars Series Methods"
+    `polynx.Series` inherits all native Polars series methods (e.g., `.sum()`, `.mean()`, `.filter()`, `.str`, `.dt`, etc.).
+    
+    For native Polars Series methods, please refer to the [Official Polars Series Reference](https://docs.pola.rs/api/python/stable/reference/series/index.html).
+
 ---
 
 ## Sequence Protocol Methods

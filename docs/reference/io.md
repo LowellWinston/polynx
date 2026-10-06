@@ -2,6 +2,11 @@
 
 Polynx re-exports all public Polars top-level functions with automatic argument unwrapping and return-value wrapping.
 
+!!! note "Standard Polars IO & Construction Functions"
+    Polynx exports all public Polars functions directly from `polynx` (e.g., `read_csv`, `read_parquet`, `scan_csv`, `scan_parquet`, `concat`, `col`, `lit`, etc.).
+    
+    For full documentation on these native IO and construction functions, please consult the [Official Polars IO Reference](https://docs.pola.rs/api/python/stable/reference/io.html).
+
 ---
 
 ## Functions

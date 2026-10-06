@@ -8,6 +8,11 @@ import polynx as plx
 df = plx.DataFrame(data)
 ```
 
+!!! note "Standard Polars DataFrame Methods"
+    `polynx.DataFrame` inherits all native Polars methods (e.g. `.filter()`, `.select()`, `.join()`, `.group_by()`, `.pivot()`, etc.).
+    
+    This page documents only the **Polynx-specific extension methods**. For native Polars DataFrame methods, please refer to the [Official Polars DataFrame Reference](https://docs.pola.rs/api/python/stable/reference/dataframe/index.html).
+
 ---
 
 ## String Expression Methods
