@@ -6,7 +6,8 @@
 
 **String-powered Polars expression engine with extended DataFrame and LazyFrame utilities.**
 
-[![PyPI version](https://img.shields.io/pypi/v/polynx.svg)](https://pypi.org/project/polynx/)
+[![PyPI version](https://img.shields.io/pypi/v/polynx.svg?logo=pypi)](https://pypi.org/project/polynx/)
+[![GitHub release](https://img.shields.io/github/v/release/LowellWinston/polynx?logo=github)](https://github.com/LowellWinston/polynx/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
