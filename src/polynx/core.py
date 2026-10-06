@@ -1,9 +1,12 @@
+import logging
 from . import utils as _utils
 from .expr_parser import parse_polars_expr
 from .wrapper import unwrap, wrap
 import polars as pl
 import numpy as np
 from .utils import select, where, case_when, mondf
+
+logger = logging.getLogger("polynx")
 
 def plx_query(self, query_str):
     """ Equivalent of query in pandas """
@@ -77,12 +80,17 @@ def plx_vcnt(self, col=None):
 def plx_ucnt(self, col=None):
     if col is None:      
         col = _utils.get_columns(self)
-    self_col = self.select(pl.col(col)).unique(maintain_order=True).count()
-    if isinstance(self_col, _utils.LazyFrame):
-        self_col_eager = self_col.collect()            
-    else:
-        self_col_eager = self_col
-    return self_col_eager.row(0)[0]
+    unwrapped = unwrap(self)
+    if isinstance(col, list):
+        if len(col) == 1:
+            col = col[0]
+        else:
+            if isinstance(unwrapped, pl.LazyFrame):
+                return unwrapped.select(pl.col(col)).collect().n_unique()
+            return unwrapped.select(pl.col(col)).n_unique()
+    if isinstance(unwrapped, pl.LazyFrame):
+        return unwrapped.select(pl.col(col).n_unique()).collect().item()
+    return unwrapped.select(pl.col(col).n_unique()).item()
 
 
 # Polynx version of with_columns
@@ -188,44 +196,43 @@ def plx_cum_max(self):
 
 
 def plx_to_list(self, col_name=None): 
-    df = self       
+    unwrapped = unwrap(self)
     if col_name is None:
-        df_columns = _utils.get_columns(df)    
+        df_columns = _utils.get_columns(self)    
         col_name = df_columns[0]
-    df_earger = df.get_column(col_name)
-    if isinstance(df, _utils.LazyFrame):
-        df_earger = df_earger.collect()
-    return df_earger.to_list()
+    if isinstance(unwrapped, pl.LazyFrame):
+        return unwrapped.select(pl.col(col_name)).collect().to_series().to_list()
+    return unwrapped.get_column(col_name).to_list()
 
 
 def plx_max(self, col_name=None):
-    df = self
     if col_name is None:
-        df_columns = _utils.get_columns(df)  
+        df_columns = _utils.get_columns(self)  
         col_name = df_columns[0]
-    df_earger = df.select(pl.col(col_name).max())
-    if isinstance(df, _utils.LazyFrame):
-        df_earger = df_earger.collect()
-    return df_earger.item()
+    unwrapped = unwrap(self)
+    if isinstance(unwrapped, pl.LazyFrame):
+        return unwrapped.select(pl.col(col_name).max()).collect().item()
+    return unwrapped.select(pl.col(col_name).max()).item()
 
 
 def plx_min(self, col_name=None):
-    df = self
     if col_name is None:
-        df_columns = _utils.get_columns(df)  
+        df_columns = _utils.get_columns(self)  
         col_name = df_columns[0]
-    df_earger = df.select(pl.col(col_name).min())
-    if isinstance(df, _utils.LazyFrame):
-        df_earger = df_earger.collect()
-    return df_earger.item()    
+    unwrapped = unwrap(self)
+    if isinstance(unwrapped, pl.LazyFrame):
+        return unwrapped.select(pl.col(col_name).min()).collect().item()
+    return unwrapped.select(pl.col(col_name).min()).item()    
    
 
 def plx_size(df, unit='mb', return_size=False):
-    _size = np.round(df.estimated_size(unit),2)  
-    print(f"DataFrame size: {_size} {unit.upper()}")      
+    unwrapped = unwrap(df)
+    _size = np.round(unwrapped.estimated_size(unit), 2)  
+    logger.info(f"DataFrame size: {_size} {unit.upper()}")      
     if return_size:
         return _size
-    
+    return _size
+
 
 def plx_rename(self, *args, **kwargs):
     if len(args) == 1 and isinstance(args[0], list):
@@ -233,10 +240,8 @@ def plx_rename(self, *args, **kwargs):
         new_cols = args[0]
         if len(cur_cols) != len(new_cols):
             raise ValueError("Length of new column names must match the number of columns in the DataFrame.")      
-        for i in range(len(new_cols)):            
-            self = wrap(unwrap(self).rename({cur_cols[i]: new_cols[i]}))
-        #print(self.collect())
-        return self
+        rename_map = dict(zip(cur_cols, new_cols))
+        return wrap(unwrap(self).rename(rename_map))
     else:
         return wrap(unwrap(self).rename(*args, **kwargs))
 

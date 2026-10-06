@@ -4,6 +4,7 @@ from .utils import plx_frame_patch, plx_expr_patch, DataFrame, LazyFrame, Series
 from . import io 
 from .expr_parser import register_udfs_by_names, register_udf, parse_polars_expr, clear_all_expr_caches
 from . import utils 
+from . import namespace
 import polars
 
 __all__ = ["DataFrame", "LazyFrame", "Series", "Expr"]

@@ -7,7 +7,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/polynx.svg)](https://pypi.org/project/polynx/)
 [![Documentation](https://img.shields.io/badge/docs-GitHub_Pages-blue.svg)](https://lowellwinston.github.io/polynx/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
 **Polynx** is a string-powered Polars expression engine with extended DataFrame and LazyFrame utilities. It brings the intuitive, concise string syntax of Pandas and SQL (such as query filtering, variable substitution, multi-statement evaluation, and conditional branching like `case_when`) directly to Polars while preserving Polars' blazing-fast execution and lazy query optimization.
 
@@ -103,6 +103,18 @@ df = plx.DataFrame({
 threshold = 2
 result = df.query("A >= @threshold & B in ['bc', 'aaa']")
 print(result)
+```
+
+### Native Polars Namespace (`df.plx.*`)
+
+You can also use Polynx methods directly on native Polars DataFrames and LazyFrames without creating a `plx.DataFrame` wrapper:
+
+```python
+import polars as pl
+import polynx  # registers the .plx namespace on Polars DataFrames and LazyFrames
+
+df = pl.DataFrame({'A': [1, 2, 3], 'B': [10, 20, 30]})
+result = df.plx.query("A > 1 & B >= 20").plx.assign("C = A + B")
 ```
 
 ---

@@ -197,3 +197,49 @@ def test_in_and_not_in_positioning():
     # inside case_when
     cw = df.wc("C = case_when([A in @var & B > 10], [999], 0)")
     assert cw['C'].to_list() == [0, 999, 0]
+
+def test_lazyframe_to_list():
+    df = plx.DataFrame({'A': [10, 20, 30], 'B': ['x', 'y', 'z']})
+    lf = df.lazy()
+    assert lf.to_list('A') == [10, 20, 30]
+    assert lf.to_list() == [10, 20, 30]
+    assert lf.max('A') == 30
+    assert lf.min('A') == 10
+
+def test_ucnt_and_rename():
+    df = plx.DataFrame({'A': [1, 2, 2, 3], 'B': [10, 20, 20, 30]})
+    assert df.ucnt('A') == 3
+    assert df.lazy().ucnt('A') == 3
+    assert df.ucnt(['A', 'B']) == 3
+    assert df.lazy().ucnt(['A', 'B']) == 3
+
+    # Vectorized rename with list
+    renamed = df.rename(['col1', 'col2'])
+    assert renamed.columns == ['col1', 'col2']
+    assert len(renamed) == 4
+
+def test_polars_namespace():
+    pldf = pl.DataFrame({'val': [1, 2, 3, 4], 'grp': ['a', 'b', 'a', 'b']})
+    # Native polars query via plx namespace
+    q_res = pldf.plx.query("val > 2")
+    assert isinstance(q_res, pl.DataFrame)
+    assert q_res['val'].to_list() == [3, 4]
+
+    # Native polars assign via plx namespace
+    as_res = pldf.plx.assign("double = val * 2")
+    assert isinstance(as_res, pl.DataFrame)
+    assert as_res['double'].to_list() == [2, 4, 6, 8]
+
+    # Native polars ucnt via plx namespace
+    assert pldf.plx.ucnt('grp') == 2
+
+    # Native polars LazyFrame via plx namespace
+    pllf = pldf.lazy()
+    lq_res = pllf.plx.query("val <= 2").collect()
+    assert isinstance(lq_res, pl.DataFrame)
+    assert lq_res['val'].to_list() == [1, 2]
+    assert pllf.plx.to_list('val') == [1, 2, 3, 4]
+
+    # Convert to Polynx wrapper via namespace
+    pxdf = pldf.plx.to_polynx()
+    assert isinstance(pxdf, plx.DataFrame)
