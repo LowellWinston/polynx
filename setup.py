@@ -2,8 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="polynx",  
-    version="0.1.16",
-    packages=find_packages(),
+    version="0.1.17",
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=[  
         "polars>=1.8",
         "lark>=1.2.2",

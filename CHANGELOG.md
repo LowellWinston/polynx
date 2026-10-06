@@ -62,7 +62,10 @@
 ## [0.1.15] - 2025-10-02
 - Features: Add non-cache mode as an option to disable cache mode and disable cache for variable substituion
 
-## [0.1.16] - 2026-10-06
+## [0.1.17] - 2026-10-06
 - Docs: Comprehensive update of README.md covering all engine and DataFrame features
+- Docs: Full MkDocs Material documentation site with automated GitHub Pages deployment
 - CI: Add GitHub Actions workflow for automated PyPI publishing with Trusted Publishing (OIDC)
-- Tests: Add comprehensive unit tests verifying all features and documentation examples
+- Fix: Fix package directory discovery in setup.py for src/ layout
+- Features: Add __getitem__ and __len__ to Series and __len__ to DataFrame
+- Maintenance: Fix pl.count() deprecation warning in plx_vcnt
