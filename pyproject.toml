@@ -19,6 +19,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/LowellWinston/polynx.git"
+Documentation = "https://lowellwinston.github.io/polynx/"
 
 [build-system]
 requires = ["setuptools>=61.0"]

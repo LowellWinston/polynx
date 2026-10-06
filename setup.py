@@ -25,6 +25,7 @@ setup(
         'Operating System :: OS Independent',
     ],
     project_urls={
+        'Documentation': 'https://lowellwinston.github.io/polynx/',
         'Changelog': 'https://github.com/LowellWinston/polynx.git/blob/main/CHANGELOG.md',
     },
 )
