@@ -61,3 +61,8 @@
 
 ## [0.1.15] - 2025-10-02
 - Features: Add non-cache mode as an option to disable cache mode and disable cache for variable substituion
+
+## [0.1.16] - 2026-10-06
+- Docs: Comprehensive update of README.md covering all engine and DataFrame features
+- CI: Add GitHub Actions workflow for automated PyPI publishing with Trusted Publishing (OIDC)
+- Tests: Add comprehensive unit tests verifying all features and documentation examples

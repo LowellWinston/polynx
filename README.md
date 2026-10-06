@@ -2,30 +2,80 @@
   <img src="https://github.com/LowellWinston/polynx/raw/master/assets/logo.png" width="120" alt="Polynx logo"/>
 </p>
 
-
 # Polynx
-String-powered Polars expression engine with extended DataFrame utilities. 
+
+[![PyPI version](https://img.shields.io/pypi/v/polynx.svg)](https://pypi.org/project/polynx/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+**Polynx** is a string-powered Polars expression engine with extended DataFrame and LazyFrame utilities. It brings the intuitive, concise string syntax of Pandas and SQL (such as query filtering, variable substitution, multi-statement evaluation, and conditional branching like `case_when`) directly to Polars while preserving Polars' blazing-fast execution and lazy query optimization.
+
+---
 
 ## Table of Contents
 
+- [Key Features](#key-features)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Features](#features)
-- [Documentation](#documentation)
+- [Quick Start](#quick-start)
+- [String Expression Engine](#string-expression-engine)
+  - [Row Filtering with `query()`](#row-filtering-with-query)
+  - [Variable Substitution (`@var`)](#variable-substitution-var)
+  - [Multi-Statement Assignments with `wc()`](#multi-statement-assignments-with-wc)
+  - [Expression Evaluation with `eval()` and `assign()`](#expression-evaluation-with-eval-and-assign)
+  - [Conditional Logic: `case_when()`, `select()`, and `where()`](#conditional-logic-case_when-select-and-where)
+  - [Date Arithmetic & `mondf()`](#date-arithmetic--mondf)
+  - [Horizontal Operations: `max_horizontal()` & `min_horizontal()`](#horizontal-operations-max_horizontal--min_horizontal)
+  - [Window Expressions & Method Chaining](#window-expressions--method-chaining)
+  - [Column Names with Spaces (Backticks)](#column-names-with-spaces-backticks)
+- [Extended DataFrame & LazyFrame Utilities](#extended-dataframe--lazyframe-utilities)
+  - [Deduplication with `dd()`](#deduplication-with-dd)
+  - [Convenient Sorting: `dsort()` & `asort()`](#convenient-sorting-dsort--asort)
+  - [Pivoting with `unstack()`](#pivoting-with-unstack)
+  - [Value & Unique Counts: `vcnt()` & `ucnt()`](#value--unique-counts-vcnt--ucnt)
+  - [String-Powered GroupBy with `gb()` & Subtotals](#string-powered-groupby-with-gb--subtotals)
+  - [Extended Grouped Summary Statistics with `describe()`](#extended-grouped-summary-statistics-with-describe)
+  - [Float Utilities: `round()` & `cum_max()`](#float-utilities-round--cum_max)
+  - [Scalar Extraction & List Conversion: `to_list()`, `max()`, `min()`](#scalar-extraction--list-conversion-to_list-max-min)
+  - [Rename by List: `rename()`](#rename-by-list-rename)
+  - [Memory Footprint Inspection: `size()`](#memory-footprint-inspection-size)
+  - [Quick Visualization with `pplot()`](#quick-visualization-with-pplot)
+  - [Pandas-Style Merge: `plx.merge()`](#pandas-style-merge-plxmerge)
+- [Extended Polars Expressions](#extended-polars-expressions)
+  - [Rolling Product: `rolling_prod()`](#rolling-product-rolling_prod)
+- [First-Class LazyFrame Support](#first-class-lazyframe-support)
+- [Expression Parser Caching](#expression-parser-caching)
+- [Custom UDF Registration](#custom-udf-registration)
+- [Polars & Pandas Interoperability](#polars--pandas-interoperability)
 - [Contributing](#contributing)
 - [License](#license)
 
+---
+
+## Key Features
+
+- **String Expression Engine**: Write filtering, mathematical calculations, and column mutations using clean string expressions.
+- **Variable Substitution (`@var`)**: Reference external variables, lists, arrays, or dates directly within string expressions.
+- **Conditional Branching (`case_when`, `select`, `where`)**: Express complex conditional logic in string queries without verbose nested `.when().then().otherwise()` chains.
+- **Multi-Statement Assignments**: Assign multiple columns sequentially separated by semicolons (`;`) in `.wc()` or `.assign()`.
+- **String GroupBy Aggregations (`gb`)**: Run aggregate calculations using string expressions, with automatic subtotal rows via `with_subtotal=True`.
+- **Extended Statistical Summaries**: Grouped descriptive statistics via `.describe(group_keys=...)`.
+- **Convenience Utilities**: Shorthand helpers for deduplication (`dd`), sorting (`dsort`/`asort`), pivoting (`unstack`), counting (`vcnt`/`ucnt`), and memory reporting (`size`).
+- **Extended Expressions**: Window rolling product (`rolling_prod`) for Polars expressions.
+- **Full LazyFrame Support**: All string methods and convenience methods work seamlessly on both eager `DataFrame` and lazy `LazyFrame`.
+- **Expression Caching & Diagnostics**: High-performance LRU and hashing caching for parsed expressions, with automatic cache bypass for variable loops.
+- **Seamless Polars Compatibility**: Fully wraps Polars; all standard Polars functions and methods (`plx.concat`, `plx.col`, etc.) are natively supported.
+
+---
 
 ## Installation
 
 ### Via PyPI (Recommended)
-Install using pip:
+
 ```bash
 pip install polynx
 ```
 
-### From Souce 
-Clone the repository and install using pip:
+### From Source
 
 ```bash
 git clone https://github.com/LowellWinston/polynx.git
@@ -33,182 +83,443 @@ cd polynx
 pip install .
 ```
 
-## Usage
+---
 
-```pyton
+## Quick Start
+
+```python
 import polynx as plx
-```
 
-- Supports all polars functions
-
-
-```python
+# Create a Polynx DataFrame (wraps polars.DataFrame)
 df = plx.DataFrame({
-    'A':[1, 2, 3, 4], 
-    'B': ['abc', 'bc', 'aaa', None], 
-    'C': ['2023-01-01','2021-01-01','2009-11-01','2000-11-11'],
-    'E': [1.1, 2.1, 3.5, 0]}
-).wc("C.str.to_datetime(format='%Y-%m-%d',time_unit='ns').dt.date()")
+    'A': [1, 2, 3, 4],
+    'B': ['abc', 'bc', 'aaa', None],
+    'C': ['2023-01-01', '2021-01-01', '2009-11-01', '2000-11-11'],
+    'E': [1.1, 2.1, 3.5, 0.0]
+}).wc("C = C.str.to_date('%Y-%m-%d')")
 
-df
+# Filter using query with variable substitution
+threshold = 2
+result = df.query("A >= @threshold & B in ['bc', 'aaa']")
+print(result)
 ```
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>1</td><td>&quot;abc&quot;</td><td>2023-01-01</td><td>1.1</td></tr><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td></tr><tr><td>4</td><td>null</td><td>2000-11-11</td><td>0.0</td></tr></tbody></table></div>
+---
 
+## String Expression Engine
 
+### Row Filtering with `query()`
 
-- Pandas style query function with chaind comparison, variable substituion in string expression
-
+`df.query(query_str)` provides an intuitive filtering interface similar to Pandas' `.query()`, powered by Polars:
 
 ```python
-var1 = 1
-var2 = 3
-var3 = ['bc']
-query_str =  "@var1 <= A < @var2 & C.dt.year() >=2020 & B in @var3"
-df.query(query_str)
+# Chained comparison & logical operators
+df.query("1 <= A < 4 & E > 1.0")
+
+# Negation and null checks
+df.query("not (B.is_null() & A.is_not_null())")
+
+# Mathematical expressions in filters
+df.query("A ** 2 - E > 1")
+
+# String operations
+df.query("B.str.contains('a|b')")
+df.query("B.str.ends_with('c')")
+
+# Date comparisons with strings
+df.query("'2001-01-01' < C < '2020-01-01'")
+
+# Membership testing
+df.query("B in ['aaa', 'bc']")
+df.query("B not in ['abc']")
 ```
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr></tbody></table></div>
+### Variable Substitution (`@var`)
 
-
-
-- String operation
-
+Prefixing an identifier with `@` pulls the variable dynamically from surrounding scopes:
 
 ```python
-query_str = "B.str.contains('a|b')"
-#query_str = " B.str.ends_with('c')"
-df.query(query_str)
+min_val = 1
+max_val = 3
+target_categories = ['bc', 'aaa']
+cutoff_date = '2010-01-01'
+
+df.query("@min_val <= A <= @max_val & B in @target_categories & C > @cutoff_date")
 ```
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>1</td><td>&quot;abc&quot;</td><td>2023-01-01</td><td>1.1</td></tr><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td></tr></tbody></table></div>
-
-
-
-- Year month comparison in string format
-
+Variables can be numbers, strings, lists, numpy arrays, or dates. Polynx automatically disables expression caching for expressions containing `@` so loop variable updates are always respected:
 
 ```python
-var5 ='2001-01-01'
-var3 = '2020-01-01'
-query_str = " @var5 < C < @var3 "
-df.query(query_str)
+tmp = plx.DataFrame()
+for i in [10, 20]:
+    print(tmp.wc("A = @i"))
 ```
 
+### Multi-Statement Assignments with `wc()`
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr></tbody></table></div>
-
-
-
-- `in` and `not in` 
-
+The `.wc()` method extends Polars' `with_columns()` by supporting multi-statement assignment strings separated by semicolons (`;`):
 
 ```python
-query_str = " B in ['aaa','bc']"
-df.query(query_str)
+# Multiple sequential assignments in a single call
+df_new = df.wc("A_sum = A.sum().over('B'); E_mean = E.mean(); Ratio = A / E_mean")
+
+# Mix string expressions and native Polars expressions
+import polars as pl
+df_new = df.wc(
+    "Flag = A > 2",
+    pl.col("E") * 100
+)
 ```
 
+### Expression Evaluation with `eval()` and `assign()`
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td></tr></tbody></table></div>
-
-
-
-- Math calcuation
-
+- `df.eval(query_str, mode='select')`: Evaluates an expression and returns only the calculated column(s).
+- `df.assign(query_str)`: Convenience shorthand for `df.eval(query_str, mode='assign')`, appending the calculated columns to the DataFrame.
 
 ```python
-query_str = " A ** 2 - E > 1"
-df.query(query_str)
+# Return calculated column
+df.eval("(A ** 2 - E) / (10 - A)")
+
+# Append calculated column
+df.assign("Score = A * 10 + E")
 ```
 
+### Conditional Logic: `case_when()`, `select()`, and `where()`
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td></tr><tr><td>4</td><td>null</td><td>2000-11-11</td><td>0.0</td></tr></tbody></table></div>
+Polynx provides built-in conditional branching functions inside string expressions, eliminating deeply nested Polars `.when().then()` expressions:
 
+#### `case_when(conds, choices, default)`
 
-
-- Pandas style eval function
-
+Unified conditional branching that handles both multiple conditions and single conditions:
 
 ```python
-query_str = " (A ** 2 - E)/(10-A)"
-df.eval(query_str)
+# Multi-condition branching (conditions list, choices list, default)
+df.wc("Tier = case_when([A < 2, B in ['bc']], ['Bronze', 'Silver'], 'Gold')")
+
+# Single-condition branching (condition, choice, default)
+df.wc("Is_High = case_when(A > 2, 1, 0)")
 ```
 
+#### `select(conds, choices, default)`
 
-<table border="1" class="dataframe"><thead><tr><th>A</th></tr><tr><td>f64</td></tr></thead><tbody><tr><td>-0.011111</td></tr><tr><td>0.2375</td></tr><tr><td>0.785714</td></tr><tr><td>2.666667</td></tr></tbody></table></div>
-
-
-
-- negation
-
+Mirrors `numpy.select` for multi-condition branching:
 
 ```python
-query_str = " not (B.is_null() & A.is_not_null())"
-df.query(query_str)
+df.wc("Category = select([A == 1, A == 2], ['First', 'Second'], 'Other')")
 ```
 
+#### `where(cond, choice, default)`
 
-
-
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td></tr></thead><tbody><tr><td>1</td><td>&quot;abc&quot;</td><td>2023-01-01</td><td>1.1</td></tr><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td></tr></tbody></table></div>
-
-
-
-- wc extends with_columns to support multipe statement assignments
-
+Mirrors `numpy.where` for ternary branching:
 
 ```python
-df.wc("A.sum().over('B').alias('H'); E.mean().alias('E_mean')")
+df.wc("Status = where(A >= 3, 'High', 'Low')")
 ```
 
+### Date Arithmetic & `mondf()`
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th><th>H</th><th>E_mean</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>f64</td><td>i64</td><td>f64</td></tr></thead><tbody><tr><td>1</td><td>&quot;abc&quot;</td><td>2023-01-01</td><td>1.1</td><td>1</td><td>1.675</td></tr><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>2.1</td><td>2</td><td>1.675</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>3.5</td><td>3</td><td>1.675</td></tr><tr><td>4</td><td>null</td><td>2000-11-11</td><td>0.0</td><td>4</td><td>1.675</td></tr></tbody></table></div>
-
-
-
-- Extend describe for group by 
-
+Calculate the month difference between two dates/datetimes with `mondf(beg_date, end_date)`:
 
 ```python
-df.describe(group_keys='B', selected_columns=['A','E']).round()
+df.wc("Months_Diff = mondf(C, C.shift()); Prev_Date = C.shift()")
 ```
 
-- Extend group_by to work with string expressions
+### Horizontal Operations: `max_horizontal()` & `min_horizontal()`
 
+Polars' horizontal aggregations are registered and directly usable inside string expressions:
 
 ```python
-df.gb('B', " A.sum(); E.mean()")
+df.wc("Row_Max = max_horizontal(A, E); Row_Min = min_horizontal(A, E)")
 ```
 
+### Window Expressions & Method Chaining
 
-
-<table border="1" class="dataframe"><thead><tr><th>B</th><th>A</th><th>E</th></tr><tr><td>str</td><td>f64</td><td>f64</td></tr></thead><tbody><tr><td>null</td><td>4.0</td><td>0.0</td></tr><tr><td>&quot;aaa&quot;</td><td>3.0</td><td>3.5</td></tr><tr><td>&quot;abc&quot;</td><td>1.0</td><td>1.1</td></tr><tr><td>&quot;bc&quot;</td><td>2.0</td><td>2.1</td></tr></tbody></table></div>
-
-
-
-- Support lazyframe
-
+String expressions support Polars window operations via `.over()` (accepting single column names or lists of column names) and dynamic method chaining:
 
 ```python
-df.lazy().wc("E = 1").collect()
+# Window aggregation over a column
+df.wc("Group_Mean = A.mean().over('B')")
+
+# Window aggregation over multiple columns
+df.wc("Multi_Group_Mean = A.mean().over(['B', 'C'])")
+
+# Method chaining
+df.wc("Processed = B.str.to_uppercase().str.slice(0, 2)")
 ```
 
+### Column Names with Spaces (Backticks)
 
+Reference columns with spaces or special characters using backticks (`` ` ``):
 
-<table border="1" class="dataframe"><thead><tr><th>A</th><th>B</th><th>C</th><th>E</th></tr><tr><td>i64</td><td>str</td><td>date</td><td>i32</td></tr></thead><tbody><tr><td>1</td><td>&quot;abc&quot;</td><td>2023-01-01</td><td>1</td></tr><tr><td>2</td><td>&quot;bc&quot;</td><td>2021-01-01</td><td>1</td></tr><tr><td>3</td><td>&quot;aaa&quot;</td><td>2009-11-01</td><td>1</td></tr><tr><td>4</td><td>null</td><td>2000-11-11</td><td>1</td></tr></tbody></table></div>
+```python
+df_special = plx.DataFrame({"First Name": ["Alice", "Bob"], "Score Value": [85, 92]})
+df_special.query("`Score Value` > 90 & `First Name` == 'Bob'")
+```
 
+---
 
-## Features
-- String-powered expression engine for Polars DataFrames
-- Support for complex mathematical and statistical operations
-- Easy-to-use syntax for powerful data manipulation
-- Fast and scalable, optimized for large datasets
+## Extended DataFrame & LazyFrame Utilities
 
-## Documentation
-TO BE UPDATED.
+Polynx patches both `DataFrame` and `LazyFrame` with productivity helpers:
+
+### Deduplication with `dd()`
+
+Deduplicates rows while maintaining order and keeping the first occurrence:
+
+```python
+df.dd()  # Equivalent to df.unique(maintain_order=True, keep='first')
+```
+
+### Convenient Sorting: `dsort()` & `asort()`
+
+Quick descending and ascending sorting:
+
+```python
+# Descending sort (defaults to all columns if by is omitted)
+df.dsort('A')
+
+# Ascending sort
+df.asort('A')
+```
+
+### Pivoting with `unstack()`
+
+Pivots a DataFrame using the last two columns as the pivot key and value column, sorted by index:
+
+```python
+df_piv = plx.DataFrame({
+    'id': [1, 1, 2, 2],
+    'attribute': ['height', 'weight', 'height', 'weight'],
+    'value': [180, 75, 165, 60]
+})
+
+df_piv.unstack()
+```
+
+### Value & Unique Counts: `vcnt()` & `ucnt()`
+
+```python
+# Frequency count grouped by column(s), sorted descending by count
+df.vcnt('B')
+
+# Total distinct/unique count as a scalar
+count = df.ucnt('A')
+```
+
+### String-Powered GroupBy with `gb()` & Subtotals
+
+Aggregate grouped data with string expressions. Enable `with_subtotal=True` to automatically append hierarchical subtotal rows and an `'All'` total summary row:
+
+```python
+# Group by with string aggregation
+df.gb('B', "A.sum(); E.mean()")
+
+# Group by with subtotal row ('All')
+df.gb('B', "A.sum()", with_subtotal=True)
+```
+
+### Extended Grouped Summary Statistics with `describe()`
+
+Extends Polars' `.describe()` to support grouping by keys for selected columns:
+
+```python
+# Computes count, null_count, mean, std, min, 25%, 50%, 75%, max grouped by 'B'
+df.describe(group_keys='B', selected_columns=['A', 'E']).round(2)
+```
+
+### Float Utilities: `round()` & `cum_max()`
+
+- `df.round(decimal=2)`: Rounds all floating-point columns across the DataFrame.
+- `df.cum_max()`: Calculates the cumulative maximum for all floating-point columns.
+
+```python
+df.round(2)
+df.cum_max()
+```
+
+### Scalar Extraction & List Conversion: `to_list()`, `max()`, `min()`
+
+Extract column values quickly without verbose `.get_column().to_list()` calls:
+
+```python
+# Extract column to a Python list (defaults to first column if col_name is omitted)
+values = df.to_list('A')  # [1, 2, 3, 4]
+
+# Extract scalar max and min values
+max_val = df.max('A')    # 4
+min_val = df.min('A')    # 1
+```
+
+### Rename by List: `rename()`
+
+In addition to Polars' standard dictionary rename syntax, Polynx allows renaming columns by supplying a list of new names matching the number of columns:
+
+```python
+df.rename(['Col_1', 'Col_2', 'Col_3', 'Col_4'])
+```
+
+### Memory Footprint Inspection: `size()`
+
+Prints the estimated DataFrame memory footprint and optionally returns the size:
+
+```python
+# Prints size to console
+df.size(unit='kb')
+
+# Return numeric value
+size_in_mb = df.size(unit='mb', return_size=True)
+```
+
+### Quick Visualization with `pplot()`
+
+Provides pandas-style `.plot()` directly from a Polynx DataFrame, setting the first column as index:
+
+```python
+df.select(['A', 'E']).pplot(kind='line')
+```
+
+### Pandas-Style Merge: `plx.merge()`
+
+Merges two DataFrames or LazyFrames with automatic suffix handling for overlapping column names:
+
+```python
+left = plx.DataFrame({'id': [1, 2], 'val': [10, 20]})
+right = plx.DataFrame({'id': [1, 2], 'val': [30, 40]})
+
+merged = plx.merge(left, right, on='id', how='inner', suffixes=('_left', '_right'))
+```
+
+---
+
+## Extended Polars Expressions
+
+Polynx patches `Expr` with additional mathematical operations:
+
+### Rolling Product: `rolling_prod()`
+
+Computes the rolling product across a window (evaluated numerically via log transform and rolling sum):
+
+```python
+df.select(plx.col('A').rolling_prod(window_size=2, min_samples=1))
+```
+
+---
+
+## First-Class LazyFrame Support
+
+All Polynx methods are fully compatible with `LazyFrame`. Operations are deferred until `.collect()`:
+
+```python
+lazy_df = df.lazy()
+
+result = (
+    lazy_df
+    .wc("A_doubled = A * 2")
+    .query("A_doubled > 4")
+    .collect()
+)
+
+# Convenient indexing on LazyFrames
+lazy_df['A']                   # Select column
+lazy_df[['A', 'B']]            # Select multiple columns
+lazy_df[pl.col('A') > 2]       # Filter rows lazily
+
+# Convert LazyFrame to Pandas directly (collects automatically)
+pandas_df = lazy_df.to_pandas()
+```
+
+---
+
+## Expression Parser Caching
+
+Polynx caches parsed Lark expression trees to eliminate parsing overhead on repeated queries.
+
+### Cache Modes
+
+Configure caching behavior via `plx.config`:
+
+- `"raw"` (default): In-memory dictionary cache keyed by expression string.
+- `"hash"`: SHA1-hashed cache for expressions.
+- `"custom_lru"`: LRU cache with configurable capacity.
+- `"none"`: Disables caching completely.
+
+```python
+import polynx as plx
+
+# Change cache mode
+plx.config.set_cache_mode("custom_lru")
+plx.config.set_cache_max_size(2000)
+
+# Check active configuration
+print(plx.config.get_cache_mode())       # 'custom_lru'
+print(plx.config.get_cache_max_size())   # 2000
+```
+
+### Cache Diagnostics & Management
+
+```python
+# Inspect cached expressions
+cache = plx.expr_parser.get_expr_cache()
+cache_size = plx.expr_parser.get_expr_cache_size()
+
+# Clear cache and reset statistics
+plx.clear_all_expr_caches()
+plx.expr_parser.reset_expr_cache_stats()
+```
+
+> **Note**: Queries utilizing `@var` variable substitutions automatically bypass caching to prevent stale variable values during iterations.
+
+---
+
+## Custom UDF Registration
+
+Register custom Python functions to call them directly within string expressions:
+
+```python
+import polynx as plx
+
+# 1. Register a single function
+def add_bonus(score, multiplier=1.1):
+    return score * multiplier
+
+plx.register_udf("add_bonus", add_bonus)
+
+# Use inside string expressions
+df = plx.DataFrame({'A': [10, 20, 30]})
+df.wc("Bonus = add_bonus(A, 1.25)")
+
+# 2. Register functions by name from a module
+import math
+plx.register_udfs_by_names(math, ['sin', 'cos', 'sqrt'])
+```
+
+---
+
+## Polars & Pandas Interoperability
+
+Polynx is designed as a drop-in enhancement to Polars:
+
+- **Polars Function Inheritance**: All Polars top-level functions (`concat`, `col`, `lit`, `when`, `read_csv`, `read_parquet`, etc.) are exposed directly through `polynx` with automatic wrapping and unwrapping:
+  ```python
+  import polynx as plx
+  df_combined = plx.concat([df, df])
+  ```
+- **Conversion to Polars**: Call `.to_polars()` on any DataFrame, LazyFrame, Series, or Expr to retrieve native Polars objects.
+- **Conversion to Pandas**: Call `.to_pandas()` on any DataFrame, LazyFrame, or Series.
+
+---
 
 ## Contributing
-We welcome contributions! If you'd like to help improve this project, please fork the repository, make your changes, and submit a pull request.
 
-## LICENSES
-This project is licensed under the MIT License - see the LICENSE file for details.
+We welcome contributions! If you'd like to help improve Polynx:
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'Add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](file:///home/ubuntu/polynx/LICENSE) file for details.
