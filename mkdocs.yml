@@ -1,0 +1,67 @@
+site_name: Polynx
+site_description: String-powered Polars expression engine with extended DataFrame utilities.
+site_author: Lowell Winston
+site_url: https://lowellwinston.github.io/polynx/
+repo_url: https://github.com/LowellWinston/polynx
+repo_name: LowellWinston/polynx
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_root_heading: true
+            show_source: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guides:
+      - Expression Engine: guides/expressions.md
+      - DataFrame Utilities: guides/dataframe-utils.md
+      - LazyFrames: guides/lazyframe.md
+      - Caching & Performance: guides/caching.md
+  - API Reference:
+      - Core & DataFrame Methods: reference/core.md
+      - Expression Parser & Caching: reference/expr_parser.md
+  - Changelog: changelog.md

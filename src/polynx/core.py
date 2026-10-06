@@ -68,7 +68,7 @@ def plx_pplot(self, *args, **kwargs):
 def plx_vcnt(self, col=None):    
     if col is None:      
         col = list(_utils.get_schema(self).keys())
-    result = self.group_by(col).agg(pl.count()).dsort('count')
+    result = self.group_by(col).agg(pl.len().alias('count')).dsort('count')
     if isinstance(result, _utils.LazyFrame):
         result = result.collect()
     return result

@@ -17,7 +17,11 @@ class Series:
                 return wrap(result)
             return wrapped
 
-        return attr
+    def __getitem__(self, item):
+        return wrap(self._pl[unwrap(item)])
+
+    def __len__(self):
+        return len(self._pl)
 
     def __repr__(self):
         return f"PolynxSeries:\n{repr(self._pl)}"

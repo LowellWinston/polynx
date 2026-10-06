@@ -22,6 +22,9 @@ class DataFrame:
     def __getitem__(self, item):
         return wrap(self._pl[item])
 
+    def __len__(self):
+        return len(self._pl)
+
     def __repr__(self):
         return f"PolynxDataFrame:\n{repr(self._pl)}"
 

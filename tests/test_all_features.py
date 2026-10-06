@@ -158,3 +158,10 @@ def test_interop(sample_df):
     # plx top-level functions
     concatenated = plx.concat([sample_df, sample_df])
     assert concatenated.shape == (8, 4)
+
+def test_series_and_df_dunders(sample_df):
+    assert len(sample_df) == 4
+    s = sample_df['A']
+    assert len(s) == 4
+    assert s[0] == 1
+    assert s[1] == 2
