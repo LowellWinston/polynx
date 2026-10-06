@@ -62,6 +62,13 @@ nav:
       - LazyFrames: guides/lazyframe.md
       - Caching & Performance: guides/caching.md
   - API Reference:
-      - Core & DataFrame Methods: reference/core.md
-      - Expression Parser & Caching: reference/expr_parser.md
+      - Overview: reference/index.md
+      - DataFrame: reference/dataframe.md
+      - LazyFrame: reference/lazyframe.md
+      - Series: reference/series.md
+      - Expressions (Expr): reference/expr.md
+      - String DSL Functions: reference/dsl.md
+      - Input / Output & Merge: reference/io.md
+      - Configuration & Cache: reference/config.md
+      - User Defined Functions (UDF): reference/udf.md
   - Changelog: changelog.md
