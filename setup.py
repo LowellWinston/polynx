@@ -11,11 +11,12 @@ setup(
         "matplotlib>=3.7",
         "pandas>=2.0.0",
         "numpy>=1.24",
+        "pyarrow>=10.0.0",
     ],
     author='Lowell Winsston',
     author_email='lowell.j.winston@gmail.com',
     description='String-powered Polars expression engine with extended DataFrame utilities.',
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding='utf-8').read(),
     long_description_content_type="text/markdown",
     url="https://github.com/LowellWinston/polynx.git",  
     classifiers=[

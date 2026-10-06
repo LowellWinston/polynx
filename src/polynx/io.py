@@ -1,4 +1,5 @@
 import polars as pl
+import builtins
 from .wrapper import wrap, unwrap
 #import inspect
 
@@ -7,18 +8,18 @@ polynx_types = ["DataFrame", "LazyFrame", "Series", "Expr"]
 def is_public_callable(name):
     return not name.startswith("_") and callable(getattr(pl, name)) and name not in polynx_types
 
-# Optionally skip certain functions you know aren't useful
-SKIP_NAMES = {"options", "config"}
+# Skip builtins to avoid shadowing types like list, and specific unneeded functions
+SKIP_NAMES = set(dir(builtins)).union({"options", "config"})
 
 def deep_unwrap(obj):
     from collections.abc import Mapping, Sequence
 
     # Avoid treating strings as Sequence
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, (builtins.list, builtins.tuple)):
         return type(obj)(deep_unwrap(x) for x in obj)
-    elif isinstance(obj, dict):
+    elif isinstance(obj, builtins.dict):
         return {deep_unwrap(k): deep_unwrap(v) for k, v in obj.items()}   
-    elif isinstance(obj, set):
+    elif isinstance(obj, builtins.set):
         return set(deep_unwrap(x) for x in obj)
     else:
         try:
