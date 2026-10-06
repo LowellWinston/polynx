@@ -72,3 +72,13 @@
 
 ## [0.1.18] - 2026-10-06
 - Fix (#1): Fix operator precedence for 'in' and 'not in' when followed by logical connectors (& / |)
+
+## [0.1.19] - 2026-10-06
+- Features: Add native Polars namespace extension (.plx) on DataFrame and LazyFrame
+- Fix: Fix LazyFrame compatibility in to_list(), max(), and min()
+- Performance: Vectorize column renaming in plx_rename
+- Performance: Optimize unique counting in plx_ucnt using native n_unique()
+- Logging: Clean library logging in plx_size
+- Typing: Add PEP 561 py.typed marker file
+- CI: Add automated multi-version Python test workflow (3.9 - 3.12)
+- CI: Automate wheel attachment to GitHub Releases on publish
