@@ -69,3 +69,6 @@
 - Fix: Fix package directory discovery in setup.py for src/ layout
 - Features: Add __getitem__ and __len__ to Series and __len__ to DataFrame
 - Maintenance: Fix pl.count() deprecation warning in plx_vcnt
+
+## [0.1.18] - 2026-10-06
+- Fix (#1): Fix operator precedence for 'in' and 'not in' when followed by logical connectors (& / |)

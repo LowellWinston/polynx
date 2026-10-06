@@ -165,3 +165,35 @@ def test_series_and_df_dunders(sample_df):
     assert len(s) == 4
     assert s[0] == 1
     assert s[1] == 2
+
+def test_in_and_not_in_positioning():
+    df = plx.DataFrame({'A': [1, 2, 3], 'B': [10, 20, 30]})
+    var = [1, 2]
+
+    # in followed by AND
+    res1 = df.query("A in @var & B > 10")
+    assert res1.shape == (1, 2)
+    assert res1['A'].to_list() == [2]
+
+    # literal list followed by AND
+    res2 = df.query("A in [1, 2] & B > 10")
+    assert res2.shape == (1, 2)
+    assert res2['A'].to_list() == [2]
+
+    # not in followed by AND
+    res3 = df.query("A not in @var & B > 10")
+    assert res3.shape == (1, 2)
+    assert res3['A'].to_list() == [3]
+
+    res4 = df.query("A not in [1, 2] & B > 10")
+    assert res4.shape == (1, 2)
+    assert res4['A'].to_list() == [3]
+
+    # in followed by OR
+    res5 = df.query("A in [1] | B > 20")
+    assert res5.shape == (2, 2)
+    assert res5['A'].to_list() == [1, 3]
+
+    # inside case_when
+    cw = df.wc("C = case_when([A in @var & B > 10], [999], 0)")
+    assert cw['C'].to_list() == [0, 999, 0]

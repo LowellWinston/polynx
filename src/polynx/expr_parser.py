@@ -30,8 +30,10 @@ query_grammar = r"""
     | comp_expr
 
     ?comp_expr: arith_expr (COMP_OP arith_expr)+ -> chained_comparison
-    | arith_expr "in" expr -> in_expr
-    | arith_expr "not" "in" expr -> not_in_expr  
+    | arith_expr "in" list_expr -> in_expr
+    | arith_expr "in" arith_expr -> in_expr
+    | arith_expr "not" "in" list_expr -> not_in_expr  
+    | arith_expr "not" "in" arith_expr -> not_in_expr  
     | arith_expr -> bare_column_as_filter
 
     ?arith_expr: arith_expr "+" term -> add
