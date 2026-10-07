@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="polynx",  
-    version="0.1.19",
+    version="0.1.20",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    package_data={"polynx": ["py.typed"]},
+    package_data={"polynx": ["py.typed", "AGENTS.md"]},
     install_requires=[  
         "polars>=1.8",
         "lark>=1.2.2",
@@ -18,6 +18,7 @@ setup(
     author='Lowell Winston',
     author_email='lowell.j.winston@gmail.com',
     description='String-powered Polars expression engine with extended DataFrame utilities.',
+    keywords=['polars', 'dataframe', 'query', 'expression', 'string-expression', 'pandas-like', 'llm', 'ai-agents'],
     long_description=open('README.md', encoding='utf-8').read(),
     long_description_content_type="text/markdown",
     url="https://github.com/LowellWinston/polynx",  
@@ -33,5 +34,7 @@ setup(
     project_urls={
         'Documentation': 'https://lowellwinston.github.io/polynx/',
         'Changelog': 'https://github.com/LowellWinston/polynx/blob/master/CHANGELOG.md',
+        'Source': 'https://github.com/LowellWinston/polynx',
+        'Agent Guide': 'https://github.com/LowellWinston/polynx/blob/master/src/polynx/AGENTS.md',
     },
 )

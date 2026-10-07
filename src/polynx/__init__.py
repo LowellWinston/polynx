@@ -1,4 +1,4 @@
-__version__ = "0.1.19"
+__version__ = "0.1.20"
 from . import core
 from .utils import plx_frame_patch, plx_expr_patch, DataFrame, LazyFrame, Series, Expr, plx_merge as merge
 from . import io 
@@ -7,7 +7,16 @@ from . import utils
 from . import namespace
 import polars
 
-__all__ = ["DataFrame", "LazyFrame", "Series", "Expr"]
+__all__ = ["DataFrame", "LazyFrame", "Series", "Expr", "agent_guide"]
+
+
+def agent_guide() -> str:
+    """Return the AI-agent usage guide (markdown) bundled with polynx.
+
+    Also available from the shell: ``python -m polynx``.
+    """
+    from importlib.resources import files
+    return files(__package__).joinpath("AGENTS.md").read_text(encoding="utf-8")
 
 for name in ['rolling_prod']:
     plx_expr_patch(name, getattr(core, f"plx_{name}"))

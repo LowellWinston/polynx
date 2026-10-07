@@ -82,3 +82,8 @@
 - Typing: Add PEP 561 py.typed marker file
 - CI: Add automated multi-version Python test workflow (3.9 - 3.12)
 - CI: Automate wheel attachment to GitHub Releases on publish
+
+## [0.1.20] - 2026-10-07
+- Agents: Bundle AGENTS.md usage guide in the package; add polynx.agent_guide() and python -m polynx
+- Agents: Add skills/polynx/SKILL.md, llms.txt and ARD manifest (.well-known/ard.json) on the docs site
+- Metadata: Add keywords and Source/Agent Guide project URLs

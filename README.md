@@ -48,6 +48,7 @@
 - [Expression Parser Caching](#expression-parser-caching)
 - [Custom UDF Registration](#custom-udf-registration)
 - [Polars & Pandas Interoperability](#polars--pandas-interoperability)
+- [Using Polynx with AI Agents](#using-polynx-with-ai-agents)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -520,6 +521,21 @@ Polynx is designed as a drop-in enhancement to Polars:
   ```
 - **Conversion to Polars**: Call `.to_polars()` on any DataFrame, LazyFrame, Series, or Expr to retrieve native Polars objects.
 - **Conversion to Pandas**: Call `.to_pandas()` on any DataFrame, LazyFrame, or Series.
+
+---
+
+## Using Polynx with AI Agents
+
+Polynx ships a concise API guide for coding agents, no MCP server required:
+
+```bash
+pip install polynx
+python -m polynx          # prints the agent guide (or: polynx.agent_guide())
+```
+
+- [`src/polynx/AGENTS.md`](src/polynx/AGENTS.md): the bundled guide
+- [`skills/polynx/SKILL.md`](skills/polynx/SKILL.md): drop-in Claude Code skill (copy into `.claude/skills/polynx/`)
+- [`llms.txt`](https://lowellwinston.github.io/polynx/llms.txt) and an [ARD](https://github.com/ards-project/ard-spec) manifest at `/.well-known/ard.json` on the docs site
 
 ---
 

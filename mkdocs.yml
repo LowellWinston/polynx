@@ -5,6 +5,12 @@ site_url: https://lowellwinston.github.io/polynx/
 repo_url: https://github.com/LowellWinston/polynx
 repo_name: LowellWinston/polynx
 
+# Dotfiles are excluded by default; keep .well-known/ard.json in the built site
+exclude_docs: |
+  /templates/
+  .*
+  !.well-known/
+
 theme:
   name: material
   palette:

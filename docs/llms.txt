@@ -1,0 +1,19 @@
+# Polynx
+
+> String-powered Polars expression engine: Pandas/SQL-style string expressions (query, eval, assign, wc, gb, case_when) with Polars speed and lazy support. Install with `pip install polynx`.
+
+## Agent guides
+- [Agent guide (AGENTS.md)](https://raw.githubusercontent.com/LowellWinston/polynx/master/src/polynx/AGENTS.md): concise API cheat sheet; also `python -m polynx` after install
+- [Skill (SKILL.md)](https://raw.githubusercontent.com/LowellWinston/polynx/master/skills/polynx/SKILL.md): drop-in Claude Code skill
+
+## Docs
+- [Getting Started](https://lowellwinston.github.io/polynx/getting-started/)
+- [Expression Engine](https://lowellwinston.github.io/polynx/guides/expressions/)
+- [DataFrame Utilities](https://lowellwinston.github.io/polynx/guides/dataframe-utils/)
+- [LazyFrames](https://lowellwinston.github.io/polynx/guides/lazyframe/)
+- [API Reference](https://lowellwinston.github.io/polynx/reference/)
+- [README](https://raw.githubusercontent.com/LowellWinston/polynx/master/README.md)
+
+## Optional
+- [Changelog](https://raw.githubusercontent.com/LowellWinston/polynx/master/CHANGELOG.md)
+- [PyPI](https://pypi.org/project/polynx/)

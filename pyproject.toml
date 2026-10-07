@@ -1,12 +1,13 @@
 [project]
 name = "polynx"
-version = "0.1.19"
+version = "0.1.20"
 description = "String-powered Polars expression engine with extended DataFrame utilities"
 authors = [
   { name="Lowell Winston", email="lowell.j.winston@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
+keywords = ["polars", "dataframe", "query", "expression", "string-expression", "pandas-like", "llm", "ai-agents"]
 requires-python = ">=3.9"
 dependencies = [
   "polars>=1.8",
@@ -29,6 +30,9 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/LowellWinston/polynx.git"
 Documentation = "https://lowellwinston.github.io/polynx/"
+Source = "https://github.com/LowellWinston/polynx"
+Changelog = "https://github.com/LowellWinston/polynx/blob/master/CHANGELOG.md"
+"Agent Guide" = "https://github.com/LowellWinston/polynx/blob/master/src/polynx/AGENTS.md"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -36,6 +40,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+polynx = ["py.typed", "AGENTS.md"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
