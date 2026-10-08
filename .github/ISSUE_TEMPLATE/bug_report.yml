@@ -1,0 +1,44 @@
+name: Bug report
+description: Something doesn't work, or gives a wrong result
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For questions or syntax ideas, please use [Discussions](https://github.com/LowellWinston/polynx/discussions) instead.
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal example
+      description: Code that reproduces the problem, with a small DataFrame built inline if possible.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      description: What you expected to happen, and what happened instead (include the full error message if there is one).
+    validations:
+      required: true
+  - type: input
+    id: polynx
+    attributes:
+      label: polynx version
+      placeholder: "python -c \"import polynx; print(polynx.__version__)\""
+    validations:
+      required: true
+  - type: input
+    id: polars
+    attributes:
+      label: Polars version
+      placeholder: "python -c \"import polars; print(polars.__version__)\""
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version and OS
+      placeholder: "3.12, Linux"
+    validations:
+      required: false

@@ -1,0 +1,19 @@
+name: Syntax or feature request
+description: Suggest pandas-style syntax or a feature polynx doesn't support yet
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: pandas
+    attributes:
+      label: What do you write today?
+      description: The pandas (or native Polars) code you would use, and what you would like to write with polynx instead.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful?
+      description: A short description of the situation where you needed it.
+    validations:
+      required: false

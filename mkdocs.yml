@@ -77,4 +77,5 @@ nav:
       - Input / Output & Merge: reference/io.md
       - Configuration & Cache: reference/config.md
       - User Defined Functions (UDF): reference/udf.md
+  - FAQ: faq.md
   - Changelog: changelog.md
