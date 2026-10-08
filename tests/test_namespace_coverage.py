@@ -29,6 +29,8 @@ def test_namespace_exposes_every_core_helper(make, skip):
 
 @pytest.mark.parametrize("frame", [
     lambda d: plx.DataFrame(d),
+    lambda d: plx.LazyFrame(d),
+    lambda d: plx.LazyFrame(d).query("y > 4"),
     lambda d: pl.DataFrame(d).plx,
     lambda d: pl.LazyFrame(d).plx,
 ])
