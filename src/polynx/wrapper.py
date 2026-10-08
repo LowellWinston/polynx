@@ -5,12 +5,18 @@ def unwrap(obj):
         return obj._pl
     return obj
 
+_types = None  # wrapper classes, imported lazily (circular imports) and cached after the first call
+
 def wrap(obj):       
-    from .frame import DataFrame
-    from .lazyframe import LazyFrame
-    from .series import Series
-    from .expr import Expr 
-    from .groupby import GroupBy  
+    global _types
+    if _types is None:
+        from .frame import DataFrame
+        from .lazyframe import LazyFrame
+        from .series import Series
+        from .expr import Expr 
+        from .groupby import GroupBy  
+        _types = (DataFrame, LazyFrame, Series, Expr, GroupBy)
+    DataFrame, LazyFrame, Series, Expr, GroupBy = _types
 
     if getattr(obj, "_is_wrapped", False):
         return obj 

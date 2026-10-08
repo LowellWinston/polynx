@@ -45,6 +45,7 @@
 - [Extended Polars Expressions](#extended-polars-expressions)
   - [Rolling Product: `rolling_prod()`](#rolling-product-rolling_prod)
 - [First-Class LazyFrame Support](#first-class-lazyframe-support)
+- [Performance & Coming from pandas](#performance--coming-from-pandas)
 - [Expression Parser Caching](#expression-parser-caching)
 - [Custom UDF Registration](#custom-udf-registration)
 - [Polars & Pandas Interoperability](#polars--pandas-interoperability)
@@ -65,7 +66,7 @@
 - **Convenience Utilities**: Shorthand helpers for deduplication (`dd`), sorting (`dsort`/`asort`), pivoting (`unstack`), counting (`vcnt`/`ucnt`), and memory reporting (`size`).
 - **Extended Expressions**: Window rolling product (`rolling_prod`) for Polars expressions.
 - **Full LazyFrame Support**: All string methods and convenience methods work seamlessly on both eager `DataFrame` and lazy `LazyFrame`.
-- **Expression Caching & Diagnostics**: High-performance LRU and hashing caching for parsed expressions, with automatic cache bypass for variable loops.
+- **Expression Caching & Diagnostics**: High-performance LRU and hashing caching for parsed expressions, plus a template cache so loops with changing values (`A > 1`, `A > 2`, ...) or `@var` don't re-parse each time.
 - **Seamless Polars Compatibility**: Fully wraps Polars; all standard Polars functions and methods (`plx.concat`, `plx.col`, etc.) are natively supported.
 
 ---
@@ -445,6 +446,30 @@ pandas_df = lazy_df.to_pandas()
 
 ---
 
+## Performance & Coming from pandas
+
+Polynx parses your string once into a native Polars expression, so the work itself runs in Polars' Rust engine. Compared with `pandas.query`:
+
+| Rows | Polars (hand-written) | **polynx** | pandas `query` |
+|---:|---:|---:|---:|
+| 1,000 | 0.31 ms | **0.28 ms** | 1.71 ms |
+| 100,000 | 1.34 ms | **1.24 ms** | 4.82 ms |
+| 5,000,000 | 48.2 ms | **48.8 ms** | 115 ms |
+
+*Median per call for `A > 5 & B in ['x', 'y'] & A * 2 < N`, repeated queries. Run `python benchmarks/bench.py` to reproduce on your machine, including the uncached and changing-value cases.*
+
+| pandas | polynx |
+|---|---|
+| `df.query("A > 2 and B == 'x'")` | `df.query("A > 2 & B == 'x'")` |
+| `df.eval("C = A * 2")` | `df.assign("C = A * 2")` |
+| `df.query("A > @t")` | `df.query("A > @t")` |
+| ``df.query("`Score Value` > 90")`` | ``df.query("`Score Value` > 90")`` |
+| `df.groupby("B").agg(...)` | `df.gb("B", "A.sum(); A.mean()")` |
+
+Unlike pandas, polynx works on `LazyFrame` as well, so Polars can optimize the whole query.
+
+---
+
 ## Expression Parser Caching
 
 Polynx caches parsed Lark expression trees to eliminate parsing overhead on repeated queries.
@@ -482,7 +507,7 @@ plx.clear_all_expr_caches()
 plx.expr_parser.reset_expr_cache_stats()
 ```
 
-> **Note**: Queries utilizing `@var` variable substitutions automatically bypass caching to prevent stale variable values during iterations.
+> **Note**: Queries using `@var` skip the exact-string cache so changed variable values are never stale. Their parse tree is still cached as a template, and `@var` values are re-read on every call.
 
 ---
 

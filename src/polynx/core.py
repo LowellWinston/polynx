@@ -1,3 +1,4 @@
+import inspect
 import logging
 from . import utils as _utils
 from .expr_parser import parse_polars_expr
@@ -246,6 +247,12 @@ def plx_rename(self, *args, **kwargs):
         return wrap(unwrap(self).rename(*args, **kwargs))
 
 
+# Polars renamed rolling_*(min_periods=) to min_samples= in 1.21; accept the new name on older versions.
+_HAS_MIN_SAMPLES = "min_samples" in inspect.signature(pl.Expr.rolling_sum).parameters
+
+
 def plx_rolling_prod(self, *args, **kwargs):
+    if not _HAS_MIN_SAMPLES and "min_samples" in kwargs:
+        kwargs["min_periods"] = kwargs.pop("min_samples")
     return self.log().rolling_sum(*args, **kwargs).exp()
 

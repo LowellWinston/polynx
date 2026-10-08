@@ -223,3 +223,13 @@ You can also register functions by name from an existing module:
 import math
 plx.register_udfs_by_names(math, ['sin', 'cos', 'sqrt'])
 ```
+
+
+## Security Notes
+
+Expression text is parsed by a grammar and is never passed to Python's `eval()`. Functions callable from a
+string are limited to a small set of pure builtins (`abs`, `round`, `min`, `max`, `sum`, `len`, `int`, `float`,
+`str`, `bool`, `pow`, `list`, `tuple`), functions you register with `register_udf`, and names in the calling
+scope. `@name` and bare function names resolve against that calling scope, so a string can use any variable or
+function the calling code can see. Treat strings from untrusted sources accordingly, and keep sensitive
+objects out of the scope where you evaluate them.

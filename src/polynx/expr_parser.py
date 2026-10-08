@@ -1,5 +1,8 @@
-from lark import Lark, Transformer, Tree
+from lark import Lark, Transformer, Tree, Token
+from lark.exceptions import VisitError
 import re
+import builtins
+import operator
 import polars as pl
 import pandas as pd
 import numpy as np
@@ -119,6 +122,20 @@ def to_pl_date(s):
     return s
 
 
+# Builtins callable from expression strings, e.g. ``abs(A - B)``. Anything else must be a
+# registered UDF (``register_udf``) or a name in the caller's scope; the expression text is never
+# passed to ``eval``, so names like ``__import__`` or ``open`` are not reachable.
+_SAFE_BUILTINS = {
+    name: getattr(builtins, name)
+    for name in ("abs", "round", "min", "max", "sum", "len", "int", "float", "str", "bool", "pow", "list", "tuple")
+}
+
+_COMP_OPS = {
+    "==": operator.eq, "!=": operator.ne, "<": operator.lt,
+    "<=": operator.le, ">": operator.gt, ">=": operator.ge,
+}
+
+
 class VarNode:
     def __init__(self, name): self.name = name
     def __repr__(self): return f"VarNode({self.name!r})"
@@ -137,6 +154,8 @@ class PolarsExprBuilder(Transformer):
         self.cols = set()
         self.env = {}        
         self.local_vars = {**PolarsExprBuilder._registered_udfs, **(local_vars or {})}
+        self._lits = None   # literal values for a templated tree (see _parse_tree)
+        self._ord = None    # token start_pos -> index into _lits
 
     def column(self, token):           
         name = str(token[0])
@@ -151,12 +170,19 @@ class PolarsExprBuilder(Transformer):
     def number(self, token):
         if isinstance(token, (int, float)):
             return token
+        elif self._lits is not None:
+            tok = token[0]
+            sign = tok[0] if tok[0] in "+-" else ""
+            text = sign + self._lits[self._ord[tok.start_pos]]
         else:
             text = str(token[0])
         return int(text) if text.isdigit() else float(text)
 
     def string(self, val):              
-        s = val[0][1:-1]       
+        if self._lits is not None:
+            s = self._lits[self._ord[val[0].start_pos]]
+        else:
+            s = val[0][1:-1]
         if s in POLARS_TYPES:
             return POLARS_TYPES[s]
         return s          
@@ -255,14 +281,7 @@ class PolarsExprBuilder(Transformer):
         for i in range(1, len(items)-1, 2):
             op = items[i].value
             right = to_pl_date(items[i+1])
-            comp = {
-                "==": left == right,
-                "!=": left != right,
-                "<": left < right,
-                "<=": left <= right,
-                ">": left > right,
-                ">=": left >= right,
-                }[op]
+            comp = _COMP_OPS[op](left, right)
             result = comp if result is None else result & comp
             left = right
         return result
@@ -410,10 +429,8 @@ class PolarsExprBuilder(Transformer):
         return str(args[0])
 
     def func_call(self, args):        
-        try:
-            func = eval(str(args[0]))
-        except:
-            func = self.local_vars[str(args[0])]
+        name = str(args[0])
+        func = _SAFE_BUILTINS[name] if name in _SAFE_BUILTINS else self.local_vars[name]
         
         raw_args = self.resolve_var(args[1:])        
         func_args = [a for a in raw_args if a is not None]  
@@ -443,13 +460,107 @@ def dynamic_all_scopes(max_frames=10):
 
 PL_PARSER = Lark(query_grammar, parser="lalr")
 
+# === Template cache
+# Loops often produce many near-identical strings ("A > 1", "A > 2", ...) that an exact-match
+# cache cannot help. We strip literals (numbers, quoted strings) to get a template key, cache the
+# Lark parse tree per template, and re-run only the (schema/variable-aware) Transformer with the
+# new literal values.
+_LITERAL_RE = re.compile(
+    r"""(?P<bt>`(?:[^`\\]|\\.)*`)"""
+    r"""|(?P<dq>"(?:[^"\\]|\\.)*")"""
+    r"""|(?P<sq>'(?:[^'\\]|\\.)*')"""
+    r"""|(?<![\w.])(?P<num>(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?)"""
+)
+_tpl_cache = {}
+
+
+def _extract_literals(expr):
+    """Return (template, literals), or None when the string can't be safely templated."""
+    lits = []
+    ok = True
+
+    def repl(m):
+        nonlocal ok
+        kind = m.lastgroup
+        if kind == "bt":
+            return m.group()
+        if kind == "num":
+            lits.append(m.group())
+            return "0"
+        body = m.group()[1:-1]
+        if "\\" in body:
+            ok = False
+        lits.append(body)
+        return '""'
+
+    tpl = _LITERAL_RE.sub(repl, expr)
+    return (tpl, lits) if ok else None
+
+
+def _compile_tree(node):
+    """Compile a Lark tree into a closure ``fn(builder)`` that evaluates it bottom-up.
+
+    Calls the same ``PolarsExprBuilder`` rule methods, in the same order, as ``Transformer.transform``
+    would (unknown rules yield a ``Tree`` and errors are wrapped in ``VisitError``), but without
+    re-walking the tree, token callbacks or per-node ``getattr`` on every call.
+    """
+    name = str(node.data)
+    method = getattr(PolarsExprBuilder, name, None)
+    kids = [(True, _compile_tree(c)) if isinstance(c, Tree) else (False, c) for c in node.children]
+
+    def run(b):
+        children = [c(b) if is_node else c for is_node, c in kids]
+        if method is None:
+            return Tree(node.data, children)
+        try:
+            return method(b, children)
+        except Exception as e:
+            raise VisitError(name, node, e) from e
+
+    return run
+
+
+def _build_template(tpl, lits):
+    """Parse the template and map literal-token positions to literal ordinals; None if inconsistent."""
+    tree = PL_PARSER.parse(tpl)
+    toks = sorted(
+        tree.scan_values(lambda v: getattr(v, "type", None) in ("SIGNED_NUMBER", "ESCAPED_STRING")),
+        key=lambda t: t.start_pos,
+    )
+    if len(toks) != len(lits):
+        return None
+    return _compile_tree(tree), {t.start_pos: i for i, t in enumerate(toks)}
+
+
+def _parse_tree(expr):
+    """Return (compiled fn or Lark tree, pos->ordinal map or None, literals or None)."""
+    if get_cache_mode() != "none":
+        ext = _extract_literals(expr)
+        if ext is not None:
+            tpl, lits = ext
+            if tpl in _tpl_cache:
+                entry = _tpl_cache[tpl]
+            else:
+                try:
+                    entry = _build_template(tpl, lits)
+                except Exception:
+                    entry = None  # fall through so the original string raises its own error
+                if len(_tpl_cache) >= get_cache_max_size():
+                    _tpl_cache.clear()
+                _tpl_cache[tpl] = entry
+            if entry is not None:
+                return entry[0], entry[1], lits
+    return PL_PARSER.parse(expr), None, None
+
+
 def parse_pl_expr(query_str: str, df_schema, local_vars=None, return_cols=False):    
     if local_vars is None:
         local_vars = dynamic_all_scopes()    
     expr = query_str.strip()    
     transformer = PolarsExprBuilder(df_schema=df_schema, local_vars=local_vars)
-    tree = PL_PARSER.parse(expr)    
-    parsed_tree = transformer.transform(tree)
+    tree, ordmap, lits = _parse_tree(expr)
+    transformer._ord, transformer._lits = ordmap, lits
+    parsed_tree = tree(transformer) if lits is not None else transformer.transform(tree)
     if return_cols:
         return parsed_tree, transformer.cols
     else:
@@ -575,6 +686,7 @@ def clear_all_expr_caches():
     _raw_cache.clear()
     _hash_cache.clear()
     _custom_lru_cache.clear()
+    _tpl_cache.clear()
     cache_stats["hit"] = 0
     cache_stats["miss"] = 0
     for k in _warned:

@@ -35,15 +35,16 @@ max_size = plx.config.get_cache_max_size()
 
 ---
 
-## Automatic Cache Bypass for `@var`
+## `@var` and Changing Values
 
-When an expression contains variable substitution syntax (`@var`), Polynx **automatically bypasses the cache**. This prevents stale variables from causing bugs when queries run in loops with updating variables:
+When an expression contains variable substitution syntax (`@var`), Polynx skips the exact-string result cache, so a changed variable is never served stale:
 
 ```python
-# Caching is automatically disabled here so @i is always re-evaluated
 for i in [1, 2, 3]:
-    df.query("A == @i")
+    df.query("A == @i")   # @i is re-read on every call
 ```
+
+Polynx also keeps a **template cache**: literals (numbers and quoted strings) are stripped from the expression, the parse tree for that shape is compiled once, and only the literal values are bound per call. Loops such as `A > 1`, `A > 2`, ... and `@var` queries therefore avoid re-parsing even though no two strings are identical. Setting the cache mode to `"none"` disables it.
 
 ---
 

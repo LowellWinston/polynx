@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout code
@@ -29,6 +29,33 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           pip install -e .
+
+      - name: Run test suite
+        env:
+          PYTHONPATH: src
+        run: |
+          pytest tests/ -v
+
+  min-polars:
+    name: Test (minimum supported Polars)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies (Polars pinned to the declared floor)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -e .
+          # keep in sync with `polars>=` in pyproject.toml and setup.py
+          pip install "polars==1.8.0"
 
       - name: Run test suite
         env:
