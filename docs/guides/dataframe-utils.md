@@ -160,7 +160,8 @@ size_kb = df.size(unit='kb', return_size=True)
 Provides pandas-style `.plot()` directly from a Polynx DataFrame, setting the first column as index:
 
 ```python
-df.select(['Date', 'Revenue']).pplot(kind='line')
+df.select(['Date', 'Revenue']).pplot(kind='line')         # plx.DataFrame / plx.LazyFrame
+pl_df.select(['Date', 'Revenue']).plx.pplot(kind='line')  # native polars objects
 ```
 
 ---

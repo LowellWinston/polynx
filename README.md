@@ -391,7 +391,8 @@ size_in_mb = df.size(unit='mb', return_size=True)
 Provides pandas-style `.plot()` directly from a Polynx DataFrame, setting the first column as index:
 
 ```python
-df.select(['A', 'E']).pplot(kind='line')
+df.select(['A', 'E']).pplot(kind='line')     # plx.DataFrame / plx.LazyFrame
+pl_df.select(['A', 'E']).plx.pplot(kind='line')  # native polars objects
 ```
 
 ### Pandas-Style Merge: `plx.merge()`

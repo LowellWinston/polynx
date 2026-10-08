@@ -60,7 +60,7 @@ def plx_unstack(self):
 
 def plx_pplot(self, *args, **kwargs):
     """ Use Pandas Plot. Note that polars has built-in plot function using either altAir """
-    if isinstance(self, _utils.LazyFrame):
+    if isinstance(self, (_utils.LazyFrame, pl.LazyFrame)):
         self_eager = self.collect()            
     else:
         self_eager = self

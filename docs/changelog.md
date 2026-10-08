@@ -95,3 +95,8 @@
 - Compat: `rolling_prod(min_samples=)` also works on Polars < 1.21, so the declared `polars>=1.8` floor holds
 - CI: Python 3.13 in the matrix and a job pinned to the minimum Polars
 - Benchmarks: Add `benchmarks/bench.py`
+
+## [0.1.22] - 2026-10-08
+- Fix: `pplot()` is now available on the native `.plx` namespace (`pl.DataFrame(...).plx.pplot(...)` and `pl.LazyFrame`); it previously worked only on the `plx.DataFrame` wrapper
+- Fix: `pplot()` now collects native `pl.LazyFrame` inputs
+- Tests: Add a check that every `plx_*` helper in `core` is exposed on the `.plx` namespaces

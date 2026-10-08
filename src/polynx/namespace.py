@@ -69,6 +69,9 @@ class PolynxDataFrameNamespace:
     def rename(self, *args, **kwargs):
         return unwrap(core.plx_rename(self._df, *args, **kwargs))
 
+    def pplot(self, *args, **kwargs):
+        return core.plx_pplot(self._df, *args, **kwargs)
+
     def to_polynx(self) -> DataFrame:
         return DataFrame(self._df)
 
@@ -133,6 +136,9 @@ class PolynxLazyFrameNamespace:
 
     def rename(self, *args, **kwargs):
         return unwrap(core.plx_rename(self._lf, *args, **kwargs))
+
+    def pplot(self, *args, **kwargs):
+        return core.plx_pplot(self._lf, *args, **kwargs)
 
     def to_polynx(self) -> LazyFrame:
         return LazyFrame(self._lf)

@@ -1,6 +1,6 @@
 [project]
 name = "polynx"
-version = "0.1.21"
+version = "0.1.22"
 description = "String-powered Polars expression engine with extended DataFrame utilities"
 authors = [
   { name="Lowell Winston", email="lowell.j.winston@gmail.com" }
