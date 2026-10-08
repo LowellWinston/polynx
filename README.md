@@ -464,7 +464,7 @@ Polynx parses your string once into a native Polars expression, so the work itse
 | `df.eval("C = A * 2")` | `df.assign("C = A * 2")` |
 | `df.query("A > @t")` | `df.query("A > @t")` |
 | ``df.query("`Score Value` > 90")`` | ``df.query("`Score Value` > 90")`` |
-| `df.groupby("B").agg(...)` | `df.gb("B", "A.sum(); A.mean()")` |
+| `df.groupby("B").agg(...)` | `df.gb("B", "S = A.sum(); M = A.mean()")` |
 
 Unlike pandas, polynx works on `LazyFrame` as well, so Polars can optimize the whole query.
 

@@ -28,7 +28,7 @@ pl.DataFrame({"A": [1, 2, 3]}).plx.query("A > 1")
 | `df.eval("A * 2")` | return only the computed column(s) |
 | `df.assign("C = A * 2")` | append computed columns |
 | `df.wc("C = A * 2; D = C + 1")` | like `with_columns`; `;`-separated statements run sequentially; also accepts native `pl.Expr` |
-| `df.gb("B", "A.sum(); A.mean()", with_subtotal=True)` | string group-by aggregation, optional subtotal and `All` rows |
+| `df.gb("B", "S = A.sum(); M = A.mean()", with_subtotal=True)` | string group-by aggregation, optional subtotal and `All` rows |
 | `df.describe(group_keys=...)` | grouped summary statistics |
 
 Syntax notes:
