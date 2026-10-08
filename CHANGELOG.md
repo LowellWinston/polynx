@@ -88,7 +88,7 @@
 - Agents: Add skills/polynx/SKILL.md, llms.txt and ARD manifest (.well-known/ard.json) on the docs site
 - Metadata: Add keywords and Source/Agent Guide project URLs
 
-## [Unreleased]
+## [0.1.21] - 2026-10-08
 - Performance: Template cache for the parser. Literals are stripped from the expression string and the parse tree is compiled once to closures, so loops with changing literals (`A > 1`, `A > 2`, ...) no longer re-parse. `@var` expressions benefit too (variables are re-resolved on every call). About 4x faster parsing.
 - Performance: `chained_comparison` builds only the requested operator; `wrap()` caches its imports
 - Security: Function calls in expressions no longer use `eval()`; only a small builtin allow-list, registered UDFs and calling-scope names are callable
