@@ -451,13 +451,13 @@ pandas_df = lazy_df.to_pandas()
 
 Polynx parses your string once into a native Polars expression, so the work itself runs in Polars' Rust engine. Compared with `pandas.query`:
 
-| Rows | Polars (hand-written) | **polynx** | pandas `query` |
+| Rows | Native Polars | **polynx** | pandas `query` |
 |---:|---:|---:|---:|
 | 1,000 | 0.31 ms | **0.28 ms** | 1.71 ms |
 | 100,000 | 1.34 ms | **1.24 ms** | 4.82 ms |
 | 5,000,000 | 48.2 ms | **48.8 ms** | 115 ms |
 
-*Median per call for `A > 5 & B in ['x', 'y'] & A * 2 < N`, repeated queries. Run `python benchmarks/bench.py` to reproduce on your machine, including the uncached and changing-value cases.*
+*Median per call for `A > 5 & B in ['x', 'y'] & A * 2 < N`, repeated queries. "Native Polars" is the same filter written directly, `df.filter((pl.col("A") > 5) & pl.col("B").is_in(["x", "y"]) & (pl.col("A") * 2 < N))`, so it shows polynx's overhead over the best case. Run `python benchmarks/bench.py` to reproduce on your machine, including the uncached and changing-value cases.*
 
 | pandas | polynx |
 |---|---|

@@ -4,7 +4,7 @@
     python benchmarks/bench.py --sizes 1000 1000000 --repeat 30
 
 Scenarios (per call, median of --repeat runs; each includes the filter/collect):
-  native          hand-written Polars expression
+  native          the same filter written directly as a native Polars expression (the baseline)
   polynx (same)   the same query string every call (expression cache hit)
   polynx (loop)   the string changes every call (e.g. a threshold in a loop), so only the
                   template cache can help
