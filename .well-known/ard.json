@@ -1,0 +1,19 @@
+{
+  "entries": [
+    {
+      "@context": "https://agenticresourcediscovery.org/context/v1",
+      "identifier": "urn:air:github.com:LowellWinston:polynx",
+      "displayName": "polynx",
+      "type": "application/ai-skill+md",
+      "url": "https://raw.githubusercontent.com/LowellWinston/polynx/master/skills/polynx/SKILL.md",
+      "description": "Python package adding Pandas/SQL-style string expressions (query, eval, assign, wc, gb, case_when) to Polars DataFrames and LazyFrames.",
+      "tags": ["python", "polars", "dataframe", "pandas", "query"],
+      "representativeQueries": [
+        "filter a polars dataframe with a string query like pandas",
+        "run multi-statement with_columns from a string in polars",
+        "group by with string aggregation expressions in polars",
+        "case_when conditional column using string expressions in polars"
+      ]
+    }
+  ]
+}
