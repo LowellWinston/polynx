@@ -100,3 +100,7 @@
 - Fix: `pplot()` is now available on the native `.plx` namespace (`pl.DataFrame(...).plx.pplot(...)` and `pl.LazyFrame`); it previously worked only on the `plx.DataFrame` wrapper
 - Fix: `pplot()` now collects native `pl.LazyFrame` inputs
 - Tests: Add a check that every `plx_*` helper in `core` is exposed on the `.plx` namespaces
+
+## [0.1.23] - 2026-10-28
+- Fix: `@var` now resolves innermost scope first (locals, then enclosing callers, then module globals). Previously the outermost frame won, so a module-level variable could silently override a function-local one
+- Tests: Add `tests/test_var_scope.py`

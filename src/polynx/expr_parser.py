@@ -451,8 +451,8 @@ def dynamic_all_scopes(max_frames=10):
         for _ in range(max_frames):
             if frame is None:
                 break
-            scope_vars.update(frame.f_globals)
-            scope_vars.update(frame.f_locals)
+            # inner frames win: existing entries override this outer frame's (locals over globals)
+            scope_vars = {**frame.f_globals, **frame.f_locals, **scope_vars}
             frame = frame.f_back
         return scope_vars
     except AttributeError:

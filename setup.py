@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="polynx",  
-    version="0.1.22",
+    version="0.1.23",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={"polynx": ["py.typed", "AGENTS.md"]},
